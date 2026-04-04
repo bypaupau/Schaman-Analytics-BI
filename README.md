@@ -21,7 +21,7 @@ El proyecto utiliza un **Modelo Estrella** para optimizar las consultas analíti
   * `DIM_ZONA_GEO`: Norte, Centro, Sur.
   * `DIM_CLIENTE`: Datos de contacto y perfil.
 
-## 📈 KPIs Implementados
+## KPIs Implementados
 El dashboard consume el Data Warehouse mediante consultas SQL dinámicas (filtrando por Año, Mes, Canal, Zona) para calcular:
 1. **FCR (Resolución al Primer Contacto):** Porcentaje de problemas resueltos en la primera interacción.
 2. **TMO (Tiempo Medio de Operación):** Duración promedio de las sesiones.
