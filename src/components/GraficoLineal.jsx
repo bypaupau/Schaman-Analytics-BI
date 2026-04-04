@@ -42,7 +42,16 @@ const CustomTooltip = ({ active, payload, label }) => {
     )
 }
 
-export function GraficoLineal({ data = dataMock }) {
+export function GraficoLineal({ data}) {
+    if (!data) {
+        return <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: 13 }}>Cargando gráfico...</div>
+    }
+
+    // Si le enviamos un arreglo vacío
+    if (Array.isArray(data) && data.length === 0) {
+        return <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: 13 }}>Sin datos para este filtro</div>
+    }
+
     return (
         <ResponsiveContainer width="100%" height={240}>
             <LineChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: -4 }}>

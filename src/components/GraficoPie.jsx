@@ -3,13 +3,6 @@
 
 import { PieChart, Pie, Tooltip, Cell, ResponsiveContainer } from 'recharts'
 
-const dataMock = [
-    { name: 'Llamadas', value: 40 },
-    { name: 'Chat',     value: 30 },
-    { name: 'Email',    value: 20 },
-    { name: 'App',      value: 10 },
-]
-
 // Paleta coherente con GraficoBarras y GraficoLineal
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6']
 
@@ -48,7 +41,29 @@ function Leyenda({ data, colors }) {
     )
 }
 
-export function GraficoPie({ data = dataMock }) {
+export function GraficoPie({ data }) {
+    if (!data) {
+        return (
+            <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: 13 }}>
+                Cargando gráfico...
+            </div>
+        )
+    }
+
+    if (Array.isArray(data) && data.length === 0) {
+        return (
+            <div style={{
+                height: 200,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-light)',
+                fontSize: 13,
+            }}>
+                Sin datos para este filtro
+            </div>
+        )
+    }
     // Asignamos fill al dato para que el tooltip lo pueda leer
     const enriched = data.map((d, i) => ({ ...d, fill: COLORS[i % COLORS.length] }))
 

@@ -79,9 +79,7 @@ export function useDashboardData(filtros) {
                 supabase.rpc('get_kpi_tasa_exito',           { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
                 supabase.rpc('get_kpi_deflection',           { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
                 supabase.rpc('get_score_global',             { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_chart_fcr_tmo_mensual',    { p_anio: anio,             p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_chart_distribucion_canal', { p_anio: anio, p_mes: mes,                 p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_chart_exito_zona',         { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_chart_fcr_tmo_mensual',    { p_anio: anio,             p_canal: canal, p_region: region, p_subzona: subzona }), supabase.rpc('get_chart_distribucion_canal', { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),                supabase.rpc('get_chart_exito_zona',         { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
                 supabase.rpc('get_sesiones_recientes',       { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona, p_limit: 20 }),
             ])
 
@@ -166,12 +164,16 @@ export function useDashboardData(filtros) {
             }
 
             // ── Gráficos ─────────────────────────────────────────────────────
-            // IMPORTANTE: siempre actualizamos, incluso si el array está vacío.
-            // Antes usábamos `if (data?.length) setState(data)` — eso causaba que
-            // al cambiar a un filtro sin datos el gráfico seguía mostrando la data
-            // del filtro anterior (datos "obsoletos" o "stale").
-            // Ahora pasamos `[]` si no hay datos → el componente muestra "Sin datos".
-            if (!rLineal.error)   setDataLineal(rLineal.data     ?? [])
+            const hayDatosEnElFiltro = Number(fcr?.total_sesiones) > 0;
+
+            // 2. Si NO hay datos, forzamos el gráfico lineal a vacío ([]).
+            if (!hayDatosEnElFiltro) {
+                setDataLineal([]);
+            } else {
+                setDataLineal(!rLineal.error ? (rLineal.data ?? []) : []);
+            }
+
+            // Los demás se quedan igual
             if (!rPie.error)      setDataPie(rPie.data           ?? [])
             if (!rBarras.error)   setDataBarras(rBarras.data     ?? [])
             if (!rSesiones.error) setDataSesiones(rSesiones.data ?? [])
