@@ -1,5 +1,6 @@
 # Schaman Analytics - Data Warehouse & Dashboard Omnicanal
 **Integrantes:** Paula Martillo, Leonor Molina, Raúl Molina, Daniel Vaca
+
 Este proyecto implementa una solución completa de Business Intelligence para **Schaman S.A.**, abarcando desde el diseño e implementación de un Data Warehouse (modelo dimensional) hasta la construcción de un dashboard analítico consumido en tiempo real.
 
 ## Objetivo del Proyecto
