@@ -1,58 +1,87 @@
-// 1. Importamos el ícono "Menu" (las tres rayitas)
-import { Home, BarChart, Users, Settings, Menu } from "lucide-react"
+// MenuLateral.jsx ─ Sidebar colapsable
+// La altura del header del sidebar (64px) coincide EXACTAMENTE con la del header principal
 
-// 2. Aquí recibimos la variable "abierto" Y la función "setAbierto"
+import { Home, BarChart2, Users, Settings, Menu } from "lucide-react"
+
+const NAV_ITEMS = [
+    { icon: Home,      label: 'Dashboard',   active: true  },
+    { icon: BarChart2, label: 'Analítica',   active: false },
+    { icon: Users,     label: 'Agentes IA',  active: false },
+    { icon: Settings,  label: 'Configuración',active: false },
+]
+
 export function MenuLateral({ abierto, setAbierto }) {
     return (
-        <aside className={`${abierto ? 'w-64' : 'w-20'} min-h-screen flex flex-col transition-all duration-300 overflow-hidden shrink-0 "shadow-[50px_0_15px_-3px_rgba(0,0,0,0.8)] }`} style={{ background: 'var(--card)' }}>
-
-            {/* Header del menú convertido en un BOTÓN CLICKABLE */}
+        <aside
+            style={{
+                width: abierto ? 220 : 64,
+                minHeight: '100vh',
+                flexShrink: 0,
+                background: 'var(--card)',
+                borderRight: '1px solid var(--border)',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'width 0.25s ease',
+                overflow: 'hidden',
+            }}
+        >
+            {/* Header del sidebar — 64px de alto, igual que el header principal */}
             <button
-                onClick={() => setAbierto(!abierto)} // 3. Al hacer clic, cambia el estado
-                className="h-[76px] flex items-center px-6 shrink-0 cursor-pointer hover:bg-slate-50 transition-colors w-full"
-                style={{ borderBottom: '1px solid var(--border)' }}
+                onClick={() => setAbierto(!abierto)}
+                style={{
+                    height: 64,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: abierto ? 'flex-start' : 'center',
+                    padding: abierto ? '0 20px' : '0',
+                    borderBottom: '1px solid var(--border)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid var(--border)',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-                {/* 4. LÓGICA DEL SEMÁFORO DEL HEADER */}
-                {abierto ? (
-                    // Si está abierto, mostramos el texto "Navegación"
-                    <span className="font-bold text-[20px] truncate" style={{ color: 'var(--text-muted)' }}>
+                <Menu size={20} style={{ color: 'var(--brand)', flexShrink: 0 }} />
+                {abierto && (
+                    <span style={{ marginLeft: 12, fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         Navegación
                     </span>
-                ) : (
-                    // Si está cerrado (w-20), mostramos el ícono centrado y azul
-                    <div className="w-full flex justify-center -ml-2"> {/* Ajuste fino de centrado */}
-                        <Menu size={24} style={{ color: 'var(--brand-blue)' }} />
-                    </div>
                 )}
             </button>
 
-            {/* Links del menú (el resto del código queda igual, ya lo tenías bien) */}
-            <nav className="flex-1 p-4 flex flex-col gap-2">
-
-                {/* Opción Activa */}
-                <a href="#" className="flex items-center gap-3 p-3 rounded-4xl font-semibold transition-colors" style={{ background: 'var(--text-light)', color: 'white' }}>
-                    <Home size={20} className="shrink-0" />
-                    {abierto && <span className="whitespace-nowrap">Dashboard</span>}
-                </a>
-
-                {/* Opciones Inactivas */}
-                <a href="#" className="flex items-center gap-3 p-3 rounded-xl font-medium transition-colors hover:bg-slate-100" style={{ color: 'var(--text-muted)' }}>
-                    <BarChart size={20} className="shrink-0" />
-                    {abierto && <span className="whitespace-nowrap">Analítica</span>}
-                </a>
-
-                <a href="#" className="flex items-center gap-3 p-3 rounded-xl font-medium transition-colors hover:bg-slate-100" style={{ color: 'var(--text-muted)' }}>
-                    <Users size={20} className="shrink-0" />
-                    {abierto && <span className="whitespace-nowrap">Agentes de IA</span>}
-                </a>
-
-                <a href="#" className="flex items-center gap-3 p-3 rounded-xl font-medium transition-colors hover:bg-slate-100" style={{ color: 'var(--text-muted)' }}>
-                    <Settings size={20} className="shrink-0" />
-                    {abierto && <span className="whitespace-nowrap">Configuración</span>}
-                </a>
-
+            {/* Links de navegación */}
+            <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {NAV_ITEMS.map(({ icon: Icon, label, active }) => (
+                    <a
+                        key={label}
+                        href="#"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '9px 12px',
+                            borderRadius: 10,
+                            textDecoration: 'none',
+                            background: active ? 'var(--brand-light)' : 'transparent',
+                            color: active ? 'var(--brand)' : 'var(--text-muted)',
+                            fontWeight: active ? 700 : 500,
+                            fontSize: 13,
+                            transition: 'background 0.15s',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                        }}
+                        onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#F1F5F9' }}
+                        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                    >
+                        <Icon size={18} style={{ flexShrink: 0 }} />
+                        {abierto && label}
+                    </a>
+                ))}
             </nav>
-
         </aside>
     )
 }

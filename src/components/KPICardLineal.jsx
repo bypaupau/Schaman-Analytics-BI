@@ -1,15 +1,22 @@
-// ✅ Importamos GraficoLineal (con Mayúscula) desde su archivo
-import { GraficoLineal } from "./GraficoLineal.jsx";
+// KPICardLineal.jsx ─ Card wrapper para el gráfico lineal
+import { GraficoLineal } from "./GraficoLineal.jsx"
 
 export function KPICardLineal({ titulo, data }) {
     return (
-        <div className="flex flex-col rounded-2xl overflow-hidden flex-1" style={{ background: 'var(--card)', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
-            <div className="px-5 pt-5 pb-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+        <div style={{
+            display: 'flex', flexDirection: 'column',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow)',
+            borderRadius: 16,
+            overflow: 'hidden',
+        }}>
+            <div style={{ padding: '16px 20px 8px', borderBottom: '1px solid var(--border)' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-light)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                     {titulo}
-                </h2>
+                </p>
             </div>
-            <div className="px-2 pb-4">
+            <div style={{ padding: '8px 12px 12px' }}>
                 <GraficoLineal data={data} />
             </div>
         </div>

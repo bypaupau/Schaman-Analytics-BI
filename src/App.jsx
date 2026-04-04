@@ -1,109 +1,139 @@
-import { KPICard } from "./components/KPICard.jsx"
+import { KPICard }      from "./components/KPICard.jsx"
 import { KPICardLineal } from "./components/KPICardLineal.jsx"
-import { KPICardPie } from "./components/KPICardPie.jsx"
-import { MenuFiltros } from "./components/MenuFiltros.jsx"
-import { Tabla } from "./components/Tabla.jsx"
-import { ScoreCard } from "./components/ScoreCard.jsx"
-import logo from "./assets/logo.png"
-import { MenuLateral } from "./components/MenuLateral.jsx"
-import { Menu } from 'lucide-react'
-import { useState } from 'react'
+import { KPICardPie }    from "./components/KPICardPie.jsx"
+import { KPICardBarras } from "./components/KPICardBarras.jsx"
+import { MenuFiltros }   from "./components/MenuFiltros.jsx"
+import { Tabla }         from "./components/Tabla.jsx"
+import { ScoreCard }     from "./components/ScoreCard.jsx"
+import logo              from "./assets/logo.png"
+import { MenuLateral }   from "./components/MenuLateral.jsx"
+import { useState }      from 'react'
 
-// Datos mock — cuando el ETL esté listo, estos valores vendrán de Supabase
-// Cada KPI tiene un "color" semántico que comunica el tipo de métrica
+// ── Datos mock ──────────────────────────────────────────────────────────────
+// Cuando el ETL esté listo vendrán de Supabase.
+// "color" usa el nombre semántico → KPICard lo mapea a la paleta correcta.
 const kpisMock = [
   {
-    KPINombre: "FCR — Resolución al Primer Contacto",
+    KPINombre:  "FCR",
+    kpiLabel:   "Resolución al Primer Contacto",
     metricaKPI: "92%",
-    textoKPI: "Porcentaje de problemas resueltos en la primera interacción, evitando que el cliente vuelva a contactar.",
-    color: "green",   // verde = éxito / resolución positiva
+    textoKPI:   "Problemas resueltos en la primera interacción.",
+    color:      "green",
+    tendencia:  "↑ +4% vs mes anterior",
+    positivo:   true,
   },
   {
-    KPINombre: "TMO — Tiempo Medio de Operación",
+    KPINombre:  "TMO",
+    kpiLabel:   "Tiempo Medio de Operación",
     metricaKPI: "245s",
-    textoKPI: "Duración promedio de la sesión, gracias al guiado dinámico de Schaman.",
-    color: "blue",    // azul = tiempo / eficiencia operativa
+    textoKPI:   "Duración promedio por sesión con guiado dinámico.",
+    color:      "blue",
+    tendencia:  "↓ −18s mejorado",
+    positivo:   true,
   },
   {
-    KPINombre: "T-NPS — Satisfacción del Cliente",
-    metricaKPI: "+42 pts",
-    textoKPI: "Net Promoter Score transaccional que mide la fidelidad inmediatamente después de la sesión.",
-    color: "yellow",  // amarillo = calidez / satisfacción (= amarillo Schaman)
+    KPINombre:  "T-NPS",
+    kpiLabel:   "Satisfacción del Cliente",
+    metricaKPI: "+42",
+    textoKPI:   "Net Promoter Score transaccional post-sesión.",
+    color:      "amber",
+    tendencia:  "↑ +20 pts digitales",
+    positivo:   true,
   },
   {
-    KPINombre: "Tasa de Éxito",
+    KPINombre:  "Tasa Éxito",
+    kpiLabel:   "Sesiones Resueltas",
     metricaKPI: "90%",
-    textoKPI: "Porcentaje de sesiones que culminaron en una resolución efectiva del problema planteado.",
-    color: "emerald", // esmeralda = crecimiento / resultado positivo
+    textoKPI:   "Sesiones con resolución efectiva del problema.",
+    color:      "teal",
+    tendencia:  "↑ +6% trimestre",
+    positivo:   true,
   },
   {
-    KPINombre: "Deflection Rate",
+    KPINombre:  "Deflection",
+    kpiLabel:   "Resuelto por IA",
     metricaKPI: "67%",
-    textoKPI: "Contactos resueltos autónomamente por agentes de IA sin intervención humana.",
-    color: "purple",  // violeta = IA / automatización / tecnología
+    textoKPI:   "Contactos resueltos por IA sin agente humano.",
+    color:      "violet",
+    tendencia:  "↑ Meta: 70%",
+    positivo:   true,
   },
 ]
 
 function App() {
-  // 3. Creamos el estado (inicia en false para que empiece cerrado y ahorre espacio)
   const [menuAbierto, setMenuAbierto] = useState(false)
 
   return (
-      // 1. Contenedor principal FLEX (pone las cosas una al lado de la otra)
-      <div className="flex min-h-screen w-full" style={{ background: 'var(--radial-bg)' }}>
+    <div className="flex min-h-screen w-full" style={{ background: 'var(--bg)' }}>
 
-        {/* 2. menú lateral a la izquierda */}
-        <MenuLateral abierto={menuAbierto} setAbierto={setMenuAbierto}/>
+      {/* ── Menú lateral ── */}
+      <MenuLateral abierto={menuAbierto} setAbierto={setMenuAbierto} />
 
-        <div className="flex-1 flex flex-col min-w-0 transition-all">
-          <header style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(15,52,96,0.06)' }}>
-            <div className="px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
+      {/* ── Área principal ── */}
+      <div className="flex-1 flex flex-col min-w-0">
 
+        {/* ── Header ─────────────────────────────────────────────────── */}
+        <header style={{
+          background: 'var(--card)',
+          borderBottom: '1px solid var(--border)',
+          boxShadow: '0 1px 4px rgba(15,52,96,0.06)',
+        }}>
+          <div className="px-8 h-[64px] flex items-center justify-between">
 
-                <img src={logo} alt="Logo Schaman" className="w-9 h-9 object-contain" />
-                <div>
-                  <h1 className="font-extrabold tracking-tight leading-none" style={{ fontSize: '1.35rem', color: 'var(--brand-blue)' }}>
-                    Schaman
-                  </h1>
-                  <p className="text-xs leading-none mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    Inteligencia de Resolución Omnicanal
-                  </p>
-                </div>
+            {/* Logo + título — centrado */}
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="Schaman" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+              <div>
+                <p className="font-bold leading-none" style={{ fontSize: '1.1rem', color: 'var(--brand)', letterSpacing: '-0.02em' }}>
+                  Schaman
+                </p>
+                <p className="text-xs leading-none mt-0.5" style={{ color: 'var(--text-light)' }}>
+                  Inteligencia de Resolución Omnicanal
+                </p>
               </div>
             </div>
-          </header>
 
+            {/* Badge "En vivo" */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '5px 12px', borderRadius: 999,
+              background: '#F0FDF4', border: '1px solid #BBF7D0',
+            }}>
+              <span style={{
+                width: 7, height: 7, borderRadius: '50%', background: '#10B981',
+                animation: 'pulse-dot 2s infinite', display: 'inline-block',
+              }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>En vivo</span>
+            </div>
 
+          </div>
+        </header>
 
-        {/* ── Contenido principal ─────────────────────────── */}
-          <main className="max-w-[1400px] mx-auto px-6 py-8 flex flex-col gap-6 w-full">
-          {/* Filtros */}
+        {/* ── Contenido principal ────────────────────────────────────── */}
+        {/* px-8 igual al header para que todo quede alineado, SIN max-w mx-auto */}
+        <main className="px-8 py-6 flex flex-col gap-5 w-full">
+
+          {/* 1. Filtros */}
           <MenuFiltros />
 
-          {/* Score Global de Calidad */}
+          {/* 2. Score Global ─ el más importante, ocupa todo el ancho */}
           <ScoreCard />
 
-          {/* KPI Cards */}
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-            {kpisMock.map((kpi, index) => (
-              <KPICard
-                key={index}
-                KPINombre={kpi.KPINombre}
-                metricaKPI={kpi.metricaKPI}
-                textoKPI={kpi.textoKPI}
-                color={kpi.color}
-              />
+          {/* 3. KPI Cards ─ 5 columnas iguales, ancho completo */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+            {kpisMock.map((kpi, i) => (
+              <KPICard key={i} {...kpi} />
             ))}
           </div>
 
-          {/* Gráficos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <KPICardLineal titulo="Evolución Mensual de Eficiencia (FCR & TMO)" />
-            <KPICardPie titulo="Distribución por Canal de Origen" />
+          {/* 4. Gráficos ─ 3 columnas iguales (triángulo invertido: visión general → detalle) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <KPICardLineal titulo="FCR & TMO — Evolución Mensual" />
+            <KPICardPie    titulo="Distribución por Canal" />
+            <KPICardBarras titulo="Tasa de Éxito por Zona" />
           </div>
 
-          {/* Tabla de sesiones */}
+          {/* 5. Tabla ─ el nivel más detallado (base del triángulo) */}
           <Tabla />
 
         </main>

@@ -1,6 +1,8 @@
-import { PieChart, Pie, Tooltip, Cell, Legend, ResponsiveContainer } from 'recharts';
+// GraficoPie.jsx ─ Donut de distribución por canal
+// Colores = misma paleta que el resto del dashboard (chart-1 a chart-4)
 
-// Datos mock — cuando el ETL esté listo, vendrán de Supabase como prop "data"
+import { PieChart, Pie, Tooltip, Cell, ResponsiveContainer } from 'recharts'
+
 const dataMock = [
     { name: 'Llamadas', value: 40 },
     { name: 'Chat',     value: 30 },
@@ -8,37 +10,71 @@ const dataMock = [
     { name: 'App',      value: 10 },
 ]
 
-// Colores distintos para cada canal — fácil de diferenciar en el gráfico
-const COLORS = ['#2563eb', '#22c55e', '#f59e0b', '#ec4899']
+// Paleta coherente con GraficoBarras y GraficoLineal
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6']
 
-// ✅ export para que otros archivos puedan importarlo
-// ✅ recibe "data" como prop en vez de tenerlos pegados adentro
-export const GraficoPie = ({ data = dataMock }) => {
+// Tooltip limpio
+const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null
+    const d = payload[0]
     return (
-        // ✅ ResponsiveContainer para que se adapte al tamaño del contenedor
-        <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-                <Pie
-                    data={data}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    innerRadius={50}   // esto lo hace donut como en el mockup
-                >
-                    {/* .map para asignarle un color a cada pedazo */}
-                    {data.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                </Pie>
-                <Tooltip
-                    contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
-                    formatter={(value) => `${value}%`}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px', color: '#64748b' }} />
-            </PieChart>
-        </ResponsiveContainer>
+        <div style={{
+            background: '#fff',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            padding: '8px 12px',
+            fontSize: 12,
+            boxShadow: 'var(--shadow)',
+        }}>
+            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: d.payload.fill, marginRight: 6 }} />
+            <span style={{ fontWeight: 700, color: 'var(--text)' }}>{d.name}:</span>
+            <span style={{ marginLeft: 4, color: 'var(--text-muted)' }}>{d.value}%</span>
+        </div>
     )
 }
 
+// Leyenda personalizada debajo del gráfico
+function Leyenda({ data, colors }) {
+    return (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', justifyContent: 'center', marginTop: 8 }}>
+            {data.map((d, i) => (
+                <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i % colors.length], display: 'inline-block', flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.name}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)' }}>{d.value}%</span>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+export function GraficoPie({ data = dataMock }) {
+    // Asignamos fill al dato para que el tooltip lo pueda leer
+    const enriched = data.map((d, i) => ({ ...d, fill: COLORS[i % COLORS.length] }))
+
+    return (
+        <div>
+            <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                    <Pie
+                        data={enriched}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        innerRadius={48}
+                        paddingAngle={3}
+                        strokeWidth={0}
+                    >
+                        {enriched.map((entry, i) => (
+                            <Cell key={i} fill={entry.fill} />
+                        ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+            </ResponsiveContainer>
+            <Leyenda data={data} colors={COLORS} />
+        </div>
+    )
+}
