@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* ═══════════════════════════════════════════════════════════
+   SISTEMA DE COLORES — SCHAMAN DASHBOARD
+   Paleta oficial: Blanco · Amarillo · Azul
+   Cada color tiene un SIGNIFICADO semántico
+═══════════════════════════════════════════════════════════ */
+:root {
+    /* ── Fondos ── */
+    --radial-bg: linear-gradient(#f5f6fa, #b5cdf8);
+    --bg:      #EEF2F9;
+    --card:    #FFFFFF;
+    --border:  #E2E9F4;
+
+    /* ── Marca Schaman ── */
+    --brand-blue:        #0F3460;
+    --brand-blue-mid:    #1B5EA7;
+    --brand-yellow:      #F5C220;
+    --brand-yellow-soft: #FFFBEB;
+    --accent: #3b4e77;
+
+    /* ── Texto — legible y con contraste ── */
+    --text:       #1A2236;
+    --text-muted: #5A6A85;
+    --text-light: #8FA0BE;
+
+    /* ── Sombras ── */
+    --shadow-sm:  0 1px 3px rgba(15,52,96,0.07), 0 2px 8px rgba(15,52,96,0.04);
+    --shadow:     0 2px 8px rgba(15,52,96,0.08), 0 8px 24px rgba(15,52,96,0.05);
+
+    /* ══════════════════════════════════════
+       COLORES SEMÁNTICOS — KPI CARDS
+    ══════════════════════════════════════ */
+    --kpi-green-bg:     #F0FDF4;
+    --kpi-green-light:  #DCFCE7;
+    --kpi-green:        #16A34A;
+
+    --kpi-blue-bg:      #EFF6FF;
+    --kpi-blue-light:   #DBEAFE;
+    --kpi-blue:         #2563EB;
+
+    --kpi-yellow-bg:    #FFFBEB;
+    --kpi-yellow-light: #FEF3C7;
+    --kpi-yellow:       #D97706;
+
+    --kpi-emerald-bg:   #ECFDF5;
+    --kpi-emerald-light:#A7F3D0;
+    --kpi-emerald:      #059669;
+
+    --kpi-purple-bg:    #F5F3FF;
+    --kpi-purple-light: #DDD6FE;
+    --kpi-purple:       #7C3AED;
+
+    /* ══════════════════════════════════════
+       COLORES PARA GRÁFICOS
+    ══════════════════════════════════════ */
+    --chart-fcr:      #22C55E;
+    --chart-tmo:      #3B82F6;
+    --chart-llamadas: #3B82F6;
+    --chart-chat:     #34D399;
+    --chart-email:    #FBBF24;
+    --chart-app:      #A78BFA;
+}
+
+* {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
