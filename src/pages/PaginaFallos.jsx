@@ -39,13 +39,22 @@ function getPrioridadColor(prioridad) {
 }
 
 // ── Helper: color de dispositivo según tasa de fallos sin resolver ────────────
-// Más del 50% de sus sesiones son fallos → rojo (crítico)
-// Entre 30% y 50%                        → naranja (alerta)
-// Menos del 30%                          → amarillo (atención)
+//
+// Semáforo de 4 niveles basado en qué porcentaje de las sesiones del dispositivo
+// terminaron en estado fallido (ESCALADO, ABANDONADO o PENDIENTE):
+//
+//   ≥ 50% → ROJO    — más de la mitad de sus sesiones son problemáticas. Crítico.
+//   ≥ 30% → NARANJA — proporción alta, requiere atención pronta
+//   ≥ 15% → AMARILLO — presencia de fallos, pero por debajo del umbral de alerta
+//   < 15% → VERDE   — tasa residual, el dispositivo no es un problema significativo
+//
+// NOTA: todos los dispositivos en esta lista YA tienen al menos un fallo.
+// El color expresa qué tan GRAVE es el problema de ese dispositivo en particular.
 function colorDispositivoPorFallos(pct_fallos) {
-    if (pct_fallos >= 50) return '#EF4444'   // rojo   — dispositivo muy problemático
-    if (pct_fallos >= 30) return '#F97316'   // naranja — vale la pena monitorear
-    return '#EAB308'                          // amarillo — nivel aceptable pero presente
+    if (pct_fallos >= 50) return '#EF4444'   // rojo    — más de la mitad son fallos
+    if (pct_fallos >= 30) return '#F97316'   // naranja — proporción alta, monitorear
+    if (pct_fallos >= 15) return '#EAB308'   // amarillo — presente pero controlable
+    return '#10B981'                          // verde   — tasa baja, no es foco de riesgo
 }
 
 // ── Card genérica para envolver cada gráfico (mismo estilo que el Overview) ──
@@ -104,7 +113,7 @@ function CardProblema({ topProblema }) {
                 <p style={{ fontSize: 11, fontWeight: 700, color: '#659e66', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                     Problema Top
                 </p>
-                <p style={{ fontSize: 11, color: 'var(--text-light)' }}>El más recurrente del año</p>
+                <p style={{ fontSize: 11, color: 'var(--text-light)' }}>El que genera más sesiones de soporte</p>
                 <p style={{ fontSize: '1.4rem', fontWeight: 800, color: '#6bb36f', lineHeight: 1.2, marginTop: 4 }}>—</p>
             </div>
         )
@@ -141,9 +150,9 @@ function CardProblema({ topProblema }) {
                 Problema Top
             </p>
 
-            {/* Sub-label */}
+            {/* Sub-label: aclaramos que el ranking es por volumen de sesiones */}
             <p style={{ fontSize: 11, color: 'var(--text-light)', marginBottom: 10, lineHeight: 1.3 }}>
-                El más recurrente del año
+                El que genera más sesiones de soporte (por volumen)
             </p>
 
             {/* NOMBRE DEL PROBLEMA — protagonista visual */}
@@ -323,14 +332,17 @@ export function PaginaFallos({ anio }) {
             {/* ── 3 KPI Cards — cada una un color distinto, ninguna repetida ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
 
-                {/* Card 1 (azul): Total de sesiones con algún problema reportado */}
+                {/*
+                    Card 1 (azul): Cuántas sesiones en total tuvieron algún tipo de problema.
+                    Muestra el tamaño del universo que se analiza en esta página.
+                */}
                 <KPICard
-                    KPINombre="Sesiones"
-                    kpiLabel="Con problema reportado este año"
+                    KPINombre="Sesiones con fallo"
+                    kpiLabel="Sesiones que terminaron sin resolverse"
                     metricaKPI={totalSesiones > 0 ? totalSesiones.toLocaleString() : '—'}
                     textoKPI={
                         topProblema
-                            ? `${topProblemas.length} tipos de problema distintos detectados`
+                            ? `Distribuidas en ${topProblemas.length} tipos de problema distintos`
                             : 'Sin datos para el período'
                     }
                     color="blue"
@@ -339,26 +351,35 @@ export function PaginaFallos({ anio }) {
                 />
 
                 {/*
-                    Card 2 (violeta): Problema más recurrente.
-                    Usamos CardProblema en vez de KPICard porque el protagonista
-                    es el NOMBRE del problema, no un número. Un KPICard genérico
-                    pondría "20" en grande, que no significa nada de un vistazo.
+                    Card 2 (violeta): Problema con más sesiones generadas.
+                    Usamos CardProblema (no KPICard) porque el protagonista es el NOMBRE
+                    del problema, no un número. La etiqueta "Por volumen de sesiones" deja
+                    claro que esto es un ranking por cantidad de contactos, no por prioridad.
+                    Un problema MEDIA puede ser el Top si genera muchas llamadas.
                 */}
                 <CardProblema topProblema={topProblema} />
 
                 {/*
-                    Card 3: Tasa global de resolución.
-                    Color condicional: verde si se cumple la meta (≥ 75%), rojo si no.
-                    Así un 69% se ve alarmante (rojo) en vez de moderado (amber).
+                    Card 3: Tasa global ponderada de resolución.
+
+                    Interpretación correcta:
+                    - La tasa se pondera por volumen: los problemas con más sesiones pesan más.
+                    - El umbral de meta es 75%. Por debajo → rojo; por encima → verde.
+                    - El texto secundario muestra la tasa de los CRÍTICOS por separado.
+                      Si los críticos están bien (ej: 80% ✓) pero el global es bajo (69%),
+                      el culpable es el volumen de problemas de prioridad MEDIA.
+
+                    ⚠️ Un 69% en ROJO es correcto: el objetivo no se cumple a nivel global
+                    aunque los casos críticos individuales sí se estén resolviendo bien.
                 */}
                 <KPICard
-                    KPINombre="Resolución"
-                    kpiLabel="Tasa global de resolución"
+                    KPINombre="Tasa de resolución"
+                    kpiLabel="Ponderada por volumen de sesiones"
                     metricaKPI={tasaGlobal != null ? `${tasaGlobal}%` : '—'}
                     textoKPI={
                         criticaRow
-                            ? `Críticos resueltos: ${criticaRow.tasa_resolucion}% · Meta: 75%`
-                            : 'Sin datos de prioridad'
+                            ? `Críticos: ${criticaRow.tasa_resolucion}% ${criticaRow.tasa_resolucion >= 75 ? '✓' : '⚠'} · Meta global: 75%`
+                            : 'Sin datos de prioridad disponibles'
                     }
                     color={colorResolucion}
                     tendencia={tasaGlobal != null && tasaGlobal >= 75 ? '✓ Meta alcanzada' : '⚠ Por debajo del objetivo'}
@@ -401,12 +422,13 @@ export function PaginaFallos({ anio }) {
 
                 <Card
                     titulo="Dispositivos con más sesiones sin resolver"
-                    subtitulo="Color: rojo ≥50% · naranja ≥30% · amarillo <30% de fallos"
+                    subtitulo="Columna = nº de fallos · Color = % de fallos sobre el total del dispositivo"
                 >
                     {/*
-                        Pasamos `dispositivosConColor` en vez de `topDispositivos` directamente
-                        porque le añadimos la propiedad `color` calculada arriba.
-                        GraficoBarrasGen usa esa propiedad para pintar cada barra individualmente.
+                        orientation="vertical" → columnas hacia arriba (en vez de barras horizontales).
+                        Así los dos gráficos de barras del dashboard no se ven iguales.
+                        Pasamos `dispositivosConColor` porque le añadimos el `color` calculado
+                        por `colorDispositivoPorFallos` según su porcentaje real de fallos.
                     */}
                     <GraficoBarrasGen
                         data={dispositivosConColor}
@@ -414,6 +436,7 @@ export function PaginaFallos({ anio }) {
                         valueKey="sesiones_con_fallo"
                         colorKey="color"
                         suffix=" ses."
+                        orientation="vertical"
                     />
                 </Card>
             </div>
