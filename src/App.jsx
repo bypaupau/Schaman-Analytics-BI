@@ -64,7 +64,7 @@ function App() {
                     borderBottom: '1px solid var(--border)',
                     boxShadow:    '0 1px 4px rgba(15,52,96,0.06)',
                 }}>
-                    <div className="px-8 h-[64px] flex items-center justify-between">
+                    <div className="px-8 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <img src={logo} alt="Schaman" style={{ width: 32, height: 32, objectFit: 'contain' }} />
                             <div>

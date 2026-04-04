@@ -14,7 +14,7 @@ import { useFallosData }    from '../hooks/useFallosData'
 import { GraficoBarrasGen } from '../components/GraficoBarrasGen'
 import { GraficoPie }       from '../components/GraficoPie'
 import { KPICard }          from '../components/KPICard'
-import { AlertOctagon }     from 'lucide-react'
+import {AlertOctagon, Activity, CheckCircle2, PieChartIcon} from 'lucide-react'
 
 // ── Helper: color de prioridad insensible a mayúsculas y tildes ──────────────
 function normalizarTexto(str) {
@@ -72,62 +72,6 @@ function Card({ titulo, subtitulo, children }) {
             </div>
             <div style={{ padding: '12px 16px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {children}
-            </div>
-        </div>
-    )
-}
-
-// ── Card especial para "Problema Top" (Rediseñada para encajar en 1/3) ──
-function CardProblema({ topProblema }) {
-    if (!topProblema) return null;
-    const c = getPrioridadColor(topProblema.prioridad)
-
-    return (
-        <div className="kpi-card" style={{
-            background: 'var(--card)', border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow)', borderRadius: 16,
-            borderTop: '3px solid #8B5CF6', padding: '20px',
-            display: 'flex', flexDirection: 'column',
-            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-        }}
-             onMouseEnter={e => {
-                 e.currentTarget.style.transform = 'translateY(-2px)'
-                 e.currentTarget.style.boxShadow = '0 4px 20px rgba(15,52,96,0.10)'
-             }}
-             onMouseLeave={e => {
-                 e.currentTarget.style.transform = 'translateY(0)'
-                 e.currentTarget.style.boxShadow = 'var(--shadow)'
-             }}
-        >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#8B5CF6', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                        Problema Top
-                    </p>
-                    <p style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 2 }}>
-                        Por volumen de sesiones
-                    </p>
-                </div>
-                <div style={{ background: '#F5F3FF', padding: '8px', borderRadius: '50%', flexShrink: 0 }}>
-                    <AlertOctagon size={20} color="#8B5CF6" />
-                </div>
-            </div>
-
-            <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--brand)', lineHeight: 1.25, marginBottom: 16 }}>
-                {topProblema.problema}
-            </p>
-
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <span style={{
-                    width: 'fit-content', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999,
-                    background: c.bg, color: c.text, border: `1px solid ${c.border}`
-                }}>
-                    Prioridad {topProblema.prioridad}
-                </span>
-                <div style={{ height: 1, background: 'var(--border)' }} />
-                <p style={{ fontSize: 11, color: 'var(--text-light)' }}>
-                    {Number(topProblema.total_sesiones).toLocaleString()} sesiones este año
-                </p>
             </div>
         </div>
     )
@@ -214,6 +158,10 @@ export function PaginaFallos({ anio }) {
     const colorResolucion = tasaGlobal == null
         ? 'blue' : tasaGlobal >= 75 ? 'green' : 'red'
 
+    const pctProblema = totalSesiones > 0 && topProblema
+        ? Math.round((Number(topProblema.total_sesiones) / totalSesiones) * 100)
+        : 0;
+
     return (
         <main style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
@@ -227,26 +175,47 @@ export function PaginaFallos({ anio }) {
                 </p>
             </div>
 
-            {/* ── Fila 1: 3 KPI Cards iguales (1fr 1fr 1fr) ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+
                 <KPICard
+                    icono={Activity}
                     KPINombre="Sesiones con fallo"
                     kpiLabel="Sesiones que terminaron sin resolverse"
                     metricaKPI={totalSesiones > 0 ? totalSesiones.toLocaleString() : '—'}
                     textoKPI={topProblema ? `Distribuidas en ${topProblemas.length} tipos de problema distintos` : 'Sin datos para el período'}
-                    color="blue" tendencia="Volumen anual" positivo={true}
+                    color="blue"
+                    tendencia="Volumen anual"
                 />
 
-                <CardProblema topProblema={topProblema} />
+                <KPICard
+                    icono={AlertOctagon}
+                    KPINombre="Problema Top"
+                    kpiLabel="Problema más frecuente"
+                    metricaKPI={topProblema ? topProblema.problema : '—'}
+                    esTextoLargo={true} /* ¡Esto adapta la tipografía! */
+                    textoKPI={topProblema ? `${topProblema.total_sesiones} sesiones generadas este año` : 'Sin datos'}
+                    color="violet"
+                    tendencia={topProblema ? `Prioridad ${topProblema.prioridad}` : undefined}
+                />
 
                 <KPICard
+                    icono={PieChartIcon}
+                    KPINombre="Impacto del Problema"
+                    kpiLabel="Peso sobre el total de fallos"
+                    metricaKPI={topProblema ? `${pctProblema}%` : '—'}
+                    textoKPI={topProblema ? `${topProblema.total_sesiones} de ${totalSesiones} sesiones totales` : 'Sin datos'}
+                    color="amber"
+                    tendencia="Concentración"
+                />
+
+                <KPICard
+                    icono={CheckCircle2}
                     KPINombre="Tasa de resolución"
                     kpiLabel="Ponderada por volumen de sesiones"
                     metricaKPI={tasaGlobal != null ? `${tasaGlobal}%` : '—'}
                     textoKPI={criticaRow ? `Críticos: ${criticaRow.tasa_resolucion}% ${criticaRow.tasa_resolucion >= 75 ? '✓' : '⚠'} · Meta global: 75%` : 'Sin datos'}
                     color={colorResolucion}
                     tendencia={tasaGlobal != null && tasaGlobal >= 75 ? '✓ Meta alcanzada' : '⚠ Por debajo del objetivo'}
-                    positivo={tasaGlobal != null && tasaGlobal >= 75}
                 />
             </div>
 
