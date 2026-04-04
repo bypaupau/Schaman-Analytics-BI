@@ -31,6 +31,8 @@ function nivel(score, max) {
 
 export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMock }) {
     const pct     = Math.round((score / max) * 100)
+
+    // Aquí ya calculas el color dinámicamente, lo usaremos para pintar todo
     const { label: nivelLabel, color: nivelColor } = nivel(score, max)
 
     const gaugeData = [{ value: score }, { value: max - score }]
@@ -62,19 +64,22 @@ export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMoc
                             innerRadius={52} outerRadius={72}
                             dataKey="value" strokeWidth={0}
                         >
-                            <Cell fill="#1E4FA8" />
+                            {/* CAMBIO 1: El arco del gauge ahora usa nivelColor */}
+                            <Cell fill={nivelColor} />
                             <Cell fill="#E4EAF4" />
                         </Pie>
                     </PieChart>
                     <div style={{ position: 'absolute', bottom: 2, width: '100%', textAlign: 'center' }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--brand)' }}>{pct}%</span>
+                        {/* CAMBIO 2: El porcentaje central del gauge usa nivelColor */}
+                        <span style={{ fontSize: 13, fontWeight: 700, color: nivelColor }}>{pct}%</span>
                     </div>
                 </div>
 
                 {/* 2. Número grande + nivel */}
                 <div style={{ flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                        <span style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--brand)', letterSpacing: '-0.04em', lineHeight: 1 }}>
+                        {/* CAMBIO 3: El número grande del Score usa nivelColor */}
+                        <span style={{ fontSize: '3rem', fontWeight: 800, color: nivelColor, letterSpacing: '-0.04em', lineHeight: 1 }}>
                             {score}
                         </span>
                         <span style={{ fontSize: '1.1rem', color: 'var(--text-light)', fontWeight: 400 }}>
@@ -89,7 +94,7 @@ export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMoc
                             {nivelLabel}
                         </span>
                         <span style={{ fontSize: 11, color: 'var(--text-light)' }}>
-                            +12 pts vs período anterior
+                            Rendimiento del período seleccionado
                         </span>
                     </div>
                 </div>

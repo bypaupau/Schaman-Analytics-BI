@@ -18,8 +18,8 @@
 
     /* ── Texto ── */
     --text:       #0F172A;
-    --text-muted: #64748B;
-    --text-light: #94A3B8;
+    --text-muted: #435a7e;
+    --text-light: #7391ba;
 
     /* ── Sombra ÚNICA usada en TODOS los cards ── */
     --shadow: 0 1px 3px rgba(15,52,96,0.06), 0 6px 18px rgba(15,52,96,0.05);
