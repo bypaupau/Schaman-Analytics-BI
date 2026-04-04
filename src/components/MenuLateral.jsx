@@ -34,7 +34,6 @@ export function MenuLateral({ abierto, setAbierto }) {
                     alignItems: 'center',
                     justifyContent: abierto ? 'flex-start' : 'center',
                     padding: abierto ? '0 20px' : '0',
-                    borderBottom: '1px solid var(--border)',
                     background: 'transparent',
                     border: 'none',
                     borderBottom: '1px solid var(--border)',

@@ -1,19 +1,27 @@
 // MenuFiltros.jsx ─ Fila de filtros tipo pill, alineados a la IZQUIERDA
-// (antes estaban centrados con justify-center, lo que los desalineaba del contenido)
+// Ahora acepta datos reales de Supabase (vía App.jsx) o usa el mock interno.
+//
+// Props:
+//   filtros   → array de { label, opciones[], valorActual } — si null usa filtrosMock
+//   onCambio  → callback(label: string, value: string) cuando el usuario cambia un filtro
 
 import { ChevronDown } from "lucide-react"
 
+// Datos de ejemplo mientras Supabase carga (se reemplazan automáticamente)
 const filtrosMock = [
-    { label: "Año",   opciones: ["2022", "2023", "2024"],                       valorInicial: "2023"    },
-    { label: "Mes",   opciones: ["Enero","Febrero","Marzo","Octubre","Todos"],   valorInicial: "Octubre" },
-    { label: "Canal", opciones: ["Todos", "Llamadas", "Chat", "Email", "App"],  valorInicial: "Todos"   },
-    { label: "Zona",  opciones: ["Global", "Norte", "Centro", "Sur"],           valorInicial: "Global"  },
+    { label: 'Año',   opciones: ['2024', '2025'],                                 valorActual: '2024'    },
+    { label: 'Mes',   opciones: ['Todos', 'Enero', 'Febrero', 'Marzo', 'Octubre'], valorActual: 'Todos'   },
+    { label: 'Canal', opciones: ['Todos', 'Llamadas', 'Chat', 'Email', 'App'],     valorActual: 'Todos'   },
+    { label: 'Zona',  opciones: ['Global', 'Norte', 'Centro', 'Sur'],              valorActual: 'Global'  },
 ]
 
 export function MenuFiltros({ filtros = filtrosMock, onCambio }) {
+    // Si App.jsx aún no cargó las opciones, filtros será null → usamos el mock
+    const lista = filtros ?? filtrosMock
+
     return (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {filtros.map((filtro) => (
+            {lista.map((filtro) => (
                 <div
                     key={filtro.label}
                     style={{
@@ -28,9 +36,16 @@ export function MenuFiltros({ filtros = filtrosMock, onCambio }) {
                     <span style={{ fontSize: 12, color: 'var(--text-light)', fontWeight: 500 }}>
                         {filtro.label}
                     </span>
+
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        {/*
+                            "value" (controlled) en lugar de "defaultValue":
+                            así el select siempre refleja el estado real de App.jsx.
+                            Cuando el usuario elige una opción, onCambio actualiza
+                            el estado en App → re-render → value se actualiza.
+                        */}
                         <select
-                            defaultValue={filtro.valorInicial}
+                            value={filtro.valorActual}
                             onChange={e => onCambio?.(filtro.label, e.target.value)}
                             style={{
                                 fontSize: 12, fontWeight: 700,
@@ -45,6 +60,7 @@ export function MenuFiltros({ filtros = filtrosMock, onCambio }) {
                                 <option key={op} value={op}>{op}</option>
                             ))}
                         </select>
+
                         <ChevronDown
                             size={13}
                             style={{ position: 'absolute', right: 0, pointerEvents: 'none', color: 'var(--text-light)' }}

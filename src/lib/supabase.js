@@ -1,7 +1,26 @@
-import {createClient} from "@supabase/supabase-js";
-const SUPABASE_URL = "https://goglfnipvhnkwcgvwite.supabase.co"
-const SUPABASE_KEY = "sb_publishable_3iAIPe7bBgxY1Q92VdM0Ww_UUeB3JXO"
+import { createClient } from "@supabase/supabase-js";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-console.log(supabase)
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Función asíncrona para probar la conexión
+async function probarConexion() {
+    try {
+        // Intenta hacer una consulta a una tabla que exista en tu base de datos
+        // Cambia 'tu_tabla' por el nombre real de alguna tabla tuya
+        const { data, error } = await supabase.from('dim_canal').select('*').limit(1);
+
+        if (error) {
+            console.error("❌ Error al conectar o consultar:", error.message);
+            return;
+        }
+
+        console.log("✅ Conexión exitosa. Datos obtenidos:", data);
+    } catch (err) {
+        console.error("❌ Error inesperado:", err);
+    }
+}
+
+probarConexion();

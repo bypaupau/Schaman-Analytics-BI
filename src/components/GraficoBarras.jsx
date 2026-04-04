@@ -33,19 +33,38 @@ const CustomTooltip = ({ active, payload }) => {
 }
 
 export function GraficoBarras({ data = dataMock }) {
+    // Si llega array vacío (filtro sin resultados) → mensaje "sin datos"
+    if (Array.isArray(data) && data.length === 0) {
+        return (
+            <div style={{
+                height: 160,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-light)',
+                fontSize: 13,
+            }}>
+                Sin datos para este filtro
+            </div>
+        )
+    }
+
+    // Altura dinámica: mínimo 200px, 30px por zona para que no se apilen
+    const altura = Math.max(200, data.length * 30)
+
     return (
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={altura}>
             <BarChart
                 data={data}
                 layout="vertical"
-                margin={{ top: 4, right: 40, bottom: 4, left: 0 }}
-                barSize={26}
+                margin={{ top: 4, right: 44, bottom: 4, left: 0 }}
+                barSize={18}
             >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E4EAF4" horizontal={false} />
                 <XAxis
                     type="number"
                     domain={[0, 100]}
-                    tick={{ fontSize: 11, fill: '#94A3B8' }}
+                    tick={{ fontSize: 10, fill: '#94A3B8' }}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={v => `${v}%`}
@@ -53,10 +72,10 @@ export function GraficoBarras({ data = dataMock }) {
                 <YAxis
                     type="category"
                     dataKey="zona"
-                    tick={{ fontSize: 12, fill: '#64748B', fontWeight: 500 }}
+                    tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
-                    width={52}
+                    width={130}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(15,52,96,0.04)' }} />
                 <Bar dataKey="exito" radius={[0, 6, 6, 0]}>
