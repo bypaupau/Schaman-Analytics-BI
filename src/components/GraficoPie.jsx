@@ -4,7 +4,19 @@
 import { PieChart, Pie, Tooltip, Cell, ResponsiveContainer } from 'recharts'
 
 // Paleta coherente con GraficoBarras y GraficoLineal
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6']
+// Agrega más colores de Tailwind que armonicen con tu diseño
+const COLORS = [
+    '#3B82F6', // Azul
+    '#10B981', // Verde
+    '#F59E0B', // Ámbar
+    '#8B5CF6', // Violeta
+    '#0EA5E9', // Teal
+    '#EC4899', // Rosa
+    '#14B8A6', // Esmeralda
+    '#F43F5E', // Rojo/Rose
+    '#6366F1', // Índigo
+    '#84CC16', // Lima
+]
 
 // Tooltip limpio
 const CustomTooltip = ({ active, payload }) => {
