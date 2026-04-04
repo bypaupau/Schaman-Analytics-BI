@@ -1,16 +1,35 @@
-// MenuLateral.jsx ─ Sidebar colapsable
-// La altura del header del sidebar (64px) coincide EXACTAMENTE con la del header principal
+// ══════════════════════════════════════════════════════════════════════════════
+// MenuLateral.jsx — Sidebar de navegación colapsable
+//
+// Cómo funciona la navegación:
+//   - App.jsx tiene un estado `pagina` ('overview' | 'fallos' | ...)
+//   - Al hacer clic en un ítem del menú, llamamos onNavegar(id) para cambiarlo
+//   - El ítem activo se destaca visualmente usando paginaActual === id
+//
+// Por qué no usamos React Router:
+//   - El proyecto es una SPA sencilla con pocas páginas
+//   - Agregar React Router añadiría dependencia extra y complejidad de configuración
+//   - Con un simple estado string en App.jsx tenemos todo lo que necesitamos
+//
+// La altura del header del sidebar (64px) coincide EXACTAMENTE con la del
+// header principal para que las líneas queden alineadas visualmente.
+// ══════════════════════════════════════════════════════════════════════════════
 
-import { Home, BarChart2, Users, Settings, Menu } from "lucide-react"
+import { Home, AlertTriangle, Users, Settings, Menu } from 'lucide-react'
 
+// Cada ítem tiene:
+//   id     → identificador único que App.jsx usa para saber qué página mostrar
+//   icon   → ícono de Lucide
+//   label  → texto que aparece cuando el menú está expandido
 const NAV_ITEMS = [
-    { icon: Home,      label: 'Dashboard',   active: true  },
-    { icon: BarChart2, label: 'Analítica',   active: false },
-    { icon: Users,     label: 'Agentes IA',  active: false },
-    { icon: Settings,  label: 'Configuración',active: false },
+    { id: 'overview', icon: Home,          label: 'Dashboard'       },
+    { id: 'fallos',   icon: AlertTriangle, label: 'Análisis Fallos' },
+    // Aquí irán las páginas futuras (agentes, clientes, etc.)
+    // { id: 'agentes',  icon: Users,         label: 'Rendimiento'     },
+    { id: 'config',   icon: Settings,       label: 'Configuración'   },
 ]
 
-export function MenuLateral({ abierto, setAbierto }) {
+export function MenuLateral({ abierto, setAbierto, paginaActual, onNavegar }) {
     return (
         <aside
             style={{
@@ -25,7 +44,7 @@ export function MenuLateral({ abierto, setAbierto }) {
                 overflow: 'hidden',
             }}
         >
-            {/* Header del sidebar — 64px de alto, igual que el header principal */}
+            {/* Botón hamburguesa — abre/cierra el sidebar */}
             <button
                 onClick={() => setAbierto(!abierto)}
                 style={{
@@ -52,34 +71,48 @@ export function MenuLateral({ abierto, setAbierto }) {
                 )}
             </button>
 
-            {/* Links de navegación */}
+            {/* Lista de ítems de navegación */}
             <nav style={{ flex: 1, padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {NAV_ITEMS.map(({ icon: Icon, label, active }) => (
-                    <a
-                        key={label}
-                        href="#"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            padding: '9px 12px',
-                            borderRadius: 10,
-                            textDecoration: 'none',
-                            background: active ? 'var(--brand-light)' : 'transparent',
-                            color: active ? 'var(--brand)' : 'var(--text-muted)',
-                            fontWeight: active ? 700 : 500,
-                            fontSize: 13,
-                            transition: 'background 0.15s',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                        }}
-                        onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#F1F5F9' }}
-                        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
-                    >
-                        <Icon size={18} style={{ flexShrink: 0 }} />
-                        {abierto && label}
-                    </a>
-                ))}
+                {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+                    // Un ítem está activo si su id coincide con la página que App.jsx está mostrando
+                    const activo = paginaActual === id
+                    return (
+                        <button
+                            key={id}
+                            onClick={() => onNavegar(id)}
+                            title={!abierto ? label : undefined}  // tooltip cuando el menú está cerrado
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                // Cuando el menú está cerrado, centramos el ícono horizontalmente.
+                                // Cuando está abierto, alineamos a la izquierda para que el texto quede bien.
+                                justifyContent: abierto ? 'flex-start' : 'center',
+                                gap: 10,
+                                // El padding lateral desaparece cuando el menú está colapsado
+                                // para que el ícono quede exactamente centrado en los 64px de ancho.
+                                padding: abierto ? '9px 12px' : '9px 0',
+                                borderRadius: 10,
+                                textDecoration: 'none',
+                                background: activo ? 'var(--brand-light)' : 'transparent',
+                                color: activo ? 'var(--brand)' : 'var(--text-muted)',
+                                fontWeight: activo ? 700 : 500,
+                                fontSize: 13,
+                                transition: 'background 0.15s',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                border: 'none',
+                                cursor: 'pointer',
+                                width: '100%',
+                                textAlign: 'left',
+                            }}
+                            onMouseEnter={e => { if (!activo) e.currentTarget.style.background = '#F1F5F9' }}
+                            onMouseLeave={e => { if (!activo) e.currentTarget.style.background = 'transparent' }}
+                        >
+                            <Icon size={18} style={{ flexShrink: 0 }} />
+                            {abierto && label}
+                        </button>
+                    )
+                })}
             </nav>
         </aside>
     )

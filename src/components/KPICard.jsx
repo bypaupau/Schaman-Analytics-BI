@@ -11,6 +11,7 @@ const PALETTE = {
     amber:  { accent: '#F59E0B', bg: '#FFFBEB', text: '#92400E' },
     teal:   { accent: '#0EA5E9', bg: '#F0F9FF', text: '#0C4A6E' },
     violet: { accent: '#8B5CF6', bg: '#F5F3FF', text: '#4C1D95' },
+    red:    { accent: '#EF4444', bg: '#FEF2F2', text: '#991B1B' },  // para KPIs en estado crítico
 }
 
 export function KPICard({
