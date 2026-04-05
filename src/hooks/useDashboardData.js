@@ -23,7 +23,7 @@ import { supabase }                            from '../lib/supabase'
 // createElement(Componente, props) es exactamente lo que hace el compilador
 // JSX por dentro, así que el resultado es idéntico.
 const ICONOS_DIM = {
-    Cobertura:    createElement(Target, { size: 13 }),
+    Precisión:    createElement(Target, { size: 13 }),
     Efectividad:  createElement(Zap,    { size: 13 }),
     Eficiencia:   createElement(Timer,  { size: 13 }),
     Experiencia:  createElement(Smile,  { size: 13 }),
@@ -147,14 +147,14 @@ export function useDashboardData(filtros) {
             ])
 
             // ── Score Global: transformamos columnas planas → array dimensiones[] ──
-            // El SQL devuelve { score_total, cobertura, efectividad, eficiencia, experiencia, proactividad }
+            // El SQL devuelve { score_total, precision, efectividad, eficiencia, experiencia, proactividad }
             // ScoreCard necesita: score (número) + dimensiones [{ nombre, valor, icono }]
             const s = rScore.data?.[0]
             if (s) {
                 setScoreData({
                     score: Math.round(s.score_total),
                     dimensiones: [
-                        { nombre: 'Cobertura',    valor: Math.round(s.cobertura),    icono: ICONOS_DIM.Cobertura    },
+                        { nombre: 'Precisión',    valor: Math.round(s.cobertura),    icono: ICONOS_DIM.Precisión    },
                         { nombre: 'Efectividad',  valor: Math.round(s.efectividad),  icono: ICONOS_DIM.Efectividad  },
                         { nombre: 'Eficiencia',   valor: Math.round(s.eficiencia),   icono: ICONOS_DIM.Eficiencia   },
                         { nombre: 'Experiencia',  valor: Math.round(s.experiencia),  icono: ICONOS_DIM.Experiencia  },

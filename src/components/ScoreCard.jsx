@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell } from 'recharts'
 import { Target, Zap, Timer, Smile, Bot } from 'lucide-react'
 
 const dimensionesMock = [
-    { nombre: 'Cobertura',    valor: 87, icono: <Target   size={13} /> },
+    { nombre: 'Precisión',    valor: 87, icono: <Target   size={13} /> },
     { nombre: 'Efectividad',  valor: 92, icono: <Zap      size={13} /> },
     { nombre: 'Eficiencia',   valor: 89, icono: <Timer    size={13} /> },
     { nombre: 'Experiencia',  valor: 73, icono: <Smile    size={13} /> },
