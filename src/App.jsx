@@ -103,9 +103,11 @@ function App() {
                 )}
 
                 {pagina === 'fallos' && (
-                    // Le pasamos el año actual del filtro para que la página
-                    // haga sus consultas con el mismo año seleccionado en el Overview
-                    <PaginaFallos anio={filtros.anio} />
+                    <PaginaFallos
+                        filtros={filtrosParaMenu}
+                        valoresFiltro={filtros}
+                        onCambioFiltro={handleFiltroChange}
+                    />
                 )}
 
                 {pagina === 'config' && <PaginaDatos />}

@@ -16,8 +16,9 @@ import { GraficoPie }       from '../components/GraficoPie'
 import { KPICard }          from '../components/KPICard'
 import { Card }             from '../components/Card'
 import { PageHeader }       from '../components/PageHeader'
+import { MenuFiltros }      from '../components/MenuFiltros.jsx'
 import { STATUS, normalizar, formatoNumero } from '../lib/chartTheme'
-import { AlertOctagon, Activity, CheckCircle2, PieChartIcon, CalendarDays } from 'lucide-react'
+import { AlertOctagon, Activity, CheckCircle2, PieChartIcon } from 'lucide-react'
 
 // ── Prioridad → color de ESTADO (insensible a mayúsculas y tildes) ───────────
 // Es una escala ordenada: crítica > alta > media > baja
@@ -110,8 +111,9 @@ function TablaPrioridad({ data }) {
 }
 
 // ── Componente principal de la página ────────────────────────────────────────
-export function PaginaFallos({ anio }) {
-    const { topProblemas, porCategoria, porPrioridad, topDispositivos } = useFallosData(anio)
+export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
+    const { topProblemas, porCategoria, porPrioridad, topDispositivos, error } = useFallosData(valoresFiltro)
+    const periodo = valoresFiltro.mes !== 'Todos' ? `${valoresFiltro.mes} ${valoresFiltro.anio}` : `Año ${valoresFiltro.anio}`
 
     const totalSesiones = topProblemas?.reduce((acc, p) => acc + Number(p.total_sesiones), 0) ?? 0
     const topProblema = topProblemas?.[0]
@@ -147,13 +149,18 @@ export function PaginaFallos({ anio }) {
             {/* ── Título de página ── */}
             <PageHeader
                 titulo="Análisis de fallos"
-                subtitulo="Problemas más frecuentes y dispositivos con mayor tasa de fallo"
-            >
-                <span className="chip" style={{ background: 'var(--card)', color: 'var(--text)', boxShadow: 'var(--shadow)', border: '1px solid var(--border)', padding: '8px 14px', fontSize: 14 }}>
-                    <CalendarDays size={16} aria-hidden="true" style={{ color: 'var(--brand)' }} />
-                    Año {anio}
-                </span>
-            </PageHeader>
+                subtitulo={`Problemas y dispositivos · ${periodo}`}
+            />
+
+            <MenuFiltros filtros={filtros} onCambio={onCambioFiltro} />
+
+            {error && (
+                <div role="alert" style={{ marginTop: 16, padding: '14px 18px', borderRadius: 12, background: 'var(--warning-soft, #fff4d6)', color: 'var(--text)', border: '1px solid var(--warning, #f0b429)' }}>
+                    <strong>No se pudieron cargar los análisis de fallos.</strong>{' '}
+                    <span>{error}</span>{' '}
+                    <span>Revisa que las cuatro funciones RPC de fallos en Supabase tengan los parámetros de filtro actualizados.</span>
+                </div>
+            )}
 
             <div className="grid-kpis">
 
@@ -163,16 +170,16 @@ export function PaginaFallos({ anio }) {
                     kpiLabel="Terminaron sin resolverse"
                     metricaKPI={totalSesiones > 0 ? formatoNumero.format(totalSesiones) : '—'}
                     textoKPI={topProblema ? `Distribuidas en ${topProblemas.length} tipos de problema distintos` : 'Sin datos para el período'}
-                    tendencia="Volumen anual"
+                    tendencia="Volumen del período"
                 />
 
                 <KPICard
                     icono={AlertOctagon}
                     KPINombre="Problema principal"
-                    kpiLabel="El más frecuente del año"
+                    kpiLabel="El más frecuente del período"
                     metricaKPI={topProblema ? topProblema.problema : '—'}
                     esTextoLargo={true} /* ¡Esto adapta la tipografía! */
-                    textoKPI={topProblema ? `${formatoNumero.format(topProblema.total_sesiones)} sesiones generadas este año` : 'Sin datos'}
+                    textoKPI={topProblema ? `${formatoNumero.format(topProblema.total_sesiones)} sesiones en este período` : 'Sin datos'}
                     tendencia={topProblema ? `Prioridad ${topProblema.prioridad}` : undefined}
                 />
 
