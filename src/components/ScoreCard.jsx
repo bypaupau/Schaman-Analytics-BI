@@ -1,133 +1,146 @@
 // ScoreCard.jsx ─ Score Global de Calidad de Resolución
-// Diseño limpio: gauge a la izquierda, número + nivel en el centro,
-// dimensiones con barras de progreso a la derecha.
+// Tarjeta "héroe" del dashboard, partida en dos:
+//   izquierda → panel teal con el gauge, el número grande y el nivel
+//   derecha   → las 5 dimensiones con barras de progreso + leyenda de umbrales
+//
+// Las barras usan colores de ESTADO (bueno / atención / crítico) y siempre
+// muestran el % en texto, así el color nunca es la única pista.
 
 import { PieChart, Pie, Cell } from 'recharts'
 import { Target, Zap, Timer, Smile, Bot } from 'lucide-react'
+import { STATUS, statusPorPorcentaje } from '../lib/chartTheme'
 
 const dimensionesMock = [
-    { nombre: 'Precisión',    valor: 87, icono: <Target   size={13} /> },
-    { nombre: 'Efectividad',  valor: 92, icono: <Zap      size={13} /> },
-    { nombre: 'Eficiencia',   valor: 89, icono: <Timer    size={13} /> },
-    { nombre: 'Experiencia',  valor: 73, icono: <Smile    size={13} /> },
-    { nombre: 'Proactividad', valor: 35, icono: <Bot      size={13} /> },
+    { nombre: 'Precisión',    valor: 87, icono: <Target   size={16} /> },
+    { nombre: 'Efectividad',  valor: 92, icono: <Zap      size={16} /> },
+    { nombre: 'Eficiencia',   valor: 89, icono: <Timer    size={16} /> },
+    { nombre: 'Experiencia',  valor: 73, icono: <Smile    size={16} /> },
+    { nombre: 'Resolución por IA', valor: 35, icono: <Bot      size={16} /> },
 ]
 
-// Color condicional de barra (mismo criterio en toda la app)
-function barColor(v) {
-    if (v >= 80) return '#10B981'
-    if (v >= 50) return '#F59E0B'
-    return '#EF4444'
-}
+const UMBRALES = [
+    { status: 'good',     label: 'Óptimo ≥ 80%'     },
+    { status: 'warning',  label: 'En progreso 50–79%' },
+    { status: 'critical', label: 'Crítico < 50%'    },
+]
 
 // Nivel de texto según puntuación
 function nivel(score, max) {
     const pct = score / max
-    if (pct >= 0.85) return { label: 'Excelente', color: '#10B981' }
-    if (pct >= 0.70) return { label: 'Avanzado',  color: '#3B82F6' }
-    if (pct >= 0.50) return { label: 'Intermedio',color: '#F59E0B' }
-    return { label: 'Básico', color: '#EF4444' }
+    if (pct >= 0.85) return { label: 'Excelente',  status: 'good'     }
+    if (pct >= 0.70) return { label: 'Avanzado',   status: 'good'     }
+    if (pct >= 0.50) return { label: 'Intermedio', status: 'warning'  }
+    return                  { label: 'Básico',     status: 'critical' }
 }
 
 export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMock }) {
-    const pct     = Math.round((score / max) * 100)
+    const pct = Math.round((score / max) * 100)
+    const { label: nivelLabel, status: nivelStatus } = nivel(score, max)
 
-    // Aquí ya calculas el color dinámicamente, lo usaremos para pintar todo
-    const { label: nivelLabel, color: nivelColor } = nivel(score, max)
-
-    const gaugeData = [{ value: score }, { value: max - score }]
+    const gaugeData = [{ value: score }, { value: Math.max(max - score, 0) }]
 
     return (
-        <div style={{
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow)',
-            borderRadius: 16,
-            padding: '20px 28px',
-        }}>
+        <section className="card reveal" style={{ flexDirection: 'row', flexWrap: 'wrap', overflow: 'hidden' }} aria-labelledby="score-titulo">
 
-            {/* Título sección */}
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-light)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>
-                Score Global de Calidad de Resolución
-            </p>
-
-            {/* Layout: [Gauge] [Número + nivel] [░░░░ Dimensiones ░░░░] */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-
-                {/* 1. Gauge semicircular */}
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <PieChart width={150} height={82}>
+            {/* ── 1. Panel héroe ─────────────────────────────────────────── */}
+            <div style={{
+                flex: '1 1 min(400px, 100%)',
+                padding: '24px 28px',
+                color: '#FFFFFF',
+                background: 'radial-gradient(420px 220px at 100% 0%, rgba(90,169,214,0.35), transparent 70%), linear-gradient(135deg, var(--brand-deep) 0%, var(--brand-strong) 55%, var(--brand) 100%)',
+                display: 'flex',
+                flexWrap: 'wrap',          // en móvil el gauge y el número se apilan
+                alignItems: 'center',
+                gap: 24,
+            }}>
+                {/* Gauge semicircular */}
+                <div style={{ position: 'relative', flexShrink: 0 }} aria-hidden="true">
+                    <PieChart width={156} height={88}>
                         <Pie
                             data={gaugeData}
                             startAngle={180} endAngle={0}
-                            cx={75} cy={78}
-                            innerRadius={52} outerRadius={72}
+                            cx={78} cy={82}
+                            innerRadius={56} outerRadius={76}
+                            cornerRadius={6}
                             dataKey="value" strokeWidth={0}
+                            isAnimationActive={false}
                         >
-                            {/* CAMBIO 1: El arco del gauge ahora usa nivelColor */}
-                            <Cell fill={nivelColor} />
-                            <Cell fill="#E4EAF4" />
+                            <Cell fill="#FFFFFF" />
+                            <Cell fill="rgba(255,255,255,0.18)" />
                         </Pie>
                     </PieChart>
-                    <div style={{ position: 'absolute', bottom: 2, width: '100%', textAlign: 'center' }}>
-                        {/* CAMBIO 2: El porcentaje central del gauge usa nivelColor */}
-                        <span style={{ fontSize: 13, fontWeight: 700, color: nivelColor }}>{pct}%</span>
-                    </div>
+                    <span className="tabular" style={{ position: 'absolute', bottom: 0, width: '100%', textAlign: 'center', fontSize: 17, fontWeight: 700 }}>
+                        {pct}%
+                    </span>
                 </div>
 
-                {/* 2. Número grande + nivel */}
-                <div style={{ flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                        {/* CAMBIO 3: El número grande del Score usa nivelColor */}
-                        <span style={{ fontSize: '3rem', fontWeight: 800, color: nivelColor, letterSpacing: '-0.04em', lineHeight: 1 }}>
+                <div style={{ minWidth: 0 }}>
+                    <h2 id="score-titulo" style={{ fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+                        Score global de calidad
+                    </h2>
+                    <p className="tabular" style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4, whiteSpace: 'nowrap' }}>
+                        <span style={{ fontFamily: 'var(--font-display)', fontSize: 56, fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1 }}>
                             {score}
                         </span>
-                        <span style={{ fontSize: '1.1rem', color: 'var(--text-light)', fontWeight: 400 }}>
-                            / {max}
-                        </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                        <span style={{
-                            fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999,
-                            background: nivelColor + '18', color: nivelColor,
-                        }}>
-                            {nivelLabel}
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--text-light)' }}>
-                            Rendimiento del período seleccionado
-                        </span>
-                    </div>
+                        <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.7)' }}>/ {max}</span>
+                    </p>
+                    <span className="chip" style={{ marginTop: 10, background: 'rgba(255,255,255,0.14)', color: '#FFFFFF', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.2)' }}>
+                        <span className="dot" style={{ background: STATUS[nivelStatus].fill, boxShadow: '0 0 0 2px rgba(255,255,255,0.9)' }} />
+                        Nivel {nivelLabel}
+                    </span>
                 </div>
-
-                {/* 3. Divisor vertical */}
-                <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--border)', flexShrink: 0 }} />
-
-                {/* 4. Dimensiones ─ flex wrap, ocupan el espacio restante */}
-                <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: '10px 24px' }}>
-                    {dimensiones.map((d) => (
-                        <div key={d.nombre} style={{ flex: '1 1 140px', minWidth: 130 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-muted)' }}>
-                                    {d.icono} {d.nombre}
-                                </span>
-                                <span style={{ fontSize: 12, fontWeight: 700, color: barColor(d.valor) }}>
-                                    {d.valor}%
-                                </span>
-                            </div>
-                            {/* Barra de progreso */}
-                            <div style={{ height: 5, borderRadius: 999, background: '#E4EAF4' }}>
-                                <div style={{
-                                    height: 5, borderRadius: 999,
-                                    width: `${d.valor}%`,
-                                    background: barColor(d.valor),
-                                    transition: 'width 0.8s ease',
-                                }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
             </div>
-        </div>
+
+            {/* ── 2. Dimensiones ─────────────────────────────────────────── */}
+            <div style={{ flex: '999 1 min(420px, 100%)', padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '6px 16px' }}>
+                    <div>
+                        <h3 className="card-title">Dimensiones del score</h3>
+                        <p className="card-subtitle">Rendimiento del período seleccionado</p>
+                    </div>
+                    <div className="legend" aria-label="Umbrales">
+                        {UMBRALES.map(u => (
+                            <span key={u.status} className="legend-item">
+                                <span className="dot" style={{ background: STATUS[u.status].fill }} />
+                                {u.label}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px 28px' }}>
+                    {dimensiones.map((d) => {
+                        const s = STATUS[statusPorPorcentaje(d.valor)]
+                        return (
+                            <li key={d.nombre}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 500, color: 'var(--text-muted)' }}>
+                                        <span aria-hidden="true" style={{ display: 'grid', color: 'var(--text-light)' }}>{d.icono}</span>
+                                        {d.nombre}
+                                    </span>
+                                    <span className="tabular" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
+                                        {d.valor}%
+                                    </span>
+                                </div>
+                                {/* Barra de progreso */}
+                                <div
+                                    role="progressbar"
+                                    aria-label={d.nombre}
+                                    aria-valuenow={d.valor} aria-valuemin={0} aria-valuemax={100}
+                                    style={{ height: 8, borderRadius: 999, background: 'var(--grid)', overflow: 'hidden' }}
+                                >
+                                    <div style={{
+                                        height: '100%', borderRadius: 999,
+                                        width: `${Math.min(d.valor, 100)}%`,
+                                        background: s.fill,
+                                        transition: 'width 0.8s ease',
+                                    }} />
+                                </div>
+                            </li>
+                        )
+                    })}
+                </ul>
+            </div>
+        </section>
     )
 }

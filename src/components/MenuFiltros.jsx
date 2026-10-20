@@ -4,8 +4,11 @@
 // Props:
 //   filtros   → array de { label, opciones[], valorActual } — si null usa filtrosMock
 //   onCambio  → callback(label: string, value: string) cuando el usuario cambia un filtro
+//
+// Cada pill es un <label>: así toda la pastilla es clickeable y el lector de
+// pantalla anuncia "Año, 2024" en lugar de un select sin nombre.
 
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, SlidersHorizontal } from "lucide-react"
 
 // Datos de ejemplo mientras Supabase carga (se reemplazan automáticamente)
 const filtrosMock = [
@@ -20,53 +23,40 @@ export function MenuFiltros({ filtros = filtrosMock, onCambio }) {
     const lista = filtros ?? filtrosMock
 
     return (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        <div role="group" aria-label="Filtros" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginRight: 4 }}>
+                <SlidersHorizontal size={18} aria-hidden="true" />
+                Filtrar por
+            </span>
+
             {lista.map((filtro) => (
-                <div
-                    key={filtro.label}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '6px 12px',
-                        borderRadius: 999,
-                        background: 'var(--card)',
-                        border: '1px solid var(--border)',
-                        boxShadow: 'var(--shadow)',
-                    }}
-                >
-                    <span style={{ fontSize: 12, color: 'var(--text-light)', fontWeight: 500 }}>
+                <label key={filtro.label} className="filter-pill">
+                    <span style={{ fontSize: 14, color: 'var(--text-light)', fontWeight: 500 }}>
                         {filtro.label}
                     </span>
 
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        {/*
-                            "value" (controlled) en lugar de "defaultValue":
-                            así el select siempre refleja el estado real de App.jsx.
-                            Cuando el usuario elige una opción, onCambio actualiza
-                            el estado en App → re-render → value se actualiza.
-                        */}
-                        <select
-                            value={filtro.valorActual}
-                            onChange={e => onCambio?.(filtro.label, e.target.value)}
-                            style={{
-                                fontSize: 12, fontWeight: 700,
-                                color: 'var(--brand)',
-                                background: 'transparent',
-                                border: 'none', outline: 'none',
-                                paddingRight: 16, cursor: 'pointer',
-                                appearance: 'none',
-                            }}
-                        >
-                            {filtro.opciones.map(op => (
-                                <option key={op} value={op}>{op}</option>
-                            ))}
-                        </select>
+                    {/*
+                        "value" (controlled) en lugar de "defaultValue":
+                        así el select siempre refleja el estado real de App.jsx.
+                        Cuando el usuario elige una opción, onCambio actualiza
+                        el estado en App → re-render → value se actualiza.
+                    */}
+                    <select
+                        name={filtro.label}
+                        value={filtro.valorActual}
+                        onChange={e => onCambio?.(filtro.label, e.target.value)}
+                    >
+                        {filtro.opciones.map(op => (
+                            <option key={op} value={op}>{op}</option>
+                        ))}
+                    </select>
 
-                        <ChevronDown
-                            size={13}
-                            style={{ position: 'absolute', right: 0, pointerEvents: 'none', color: 'var(--text-light)' }}
-                        />
-                    </div>
-                </div>
+                    <ChevronDown
+                        size={16}
+                        aria-hidden="true"
+                        style={{ position: 'absolute', right: 14, pointerEvents: 'none', color: 'var(--text-light)' }}
+                    />
+                </label>
             ))}
         </div>
     )

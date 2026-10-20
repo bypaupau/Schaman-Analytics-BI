@@ -14,8 +14,11 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, createElement } from 'react'
-import { Target, Zap, Timer, Smile, Bot }     from 'lucide-react'
+import { Target, Zap, Timer, Smile, Bot,
+         CircleCheckBig, Clock, MessageCircleHeart,
+         TrendingUp }                          from 'lucide-react'
 import { supabase }                            from '../lib/supabase'
+import { formatoNumero }                       from '../lib/chartTheme'
 
 // ── Iconos para las 5 dimensiones del ScoreCard ─────────────────────────────
 // Usamos createElement() en lugar de JSX (<Target />) porque este archivo
@@ -23,11 +26,11 @@ import { supabase }                            from '../lib/supabase'
 // createElement(Componente, props) es exactamente lo que hace el compilador
 // JSX por dentro, así que el resultado es idéntico.
 const ICONOS_DIM = {
-    Precisión:    createElement(Target, { size: 13 }),
-    Efectividad:  createElement(Zap,    { size: 13 }),
-    Eficiencia:   createElement(Timer,  { size: 13 }),
-    Experiencia:  createElement(Smile,  { size: 13 }),
-    Proactividad: createElement(Bot,    { size: 13 }),
+    Precisión:    createElement(Target, { size: 16 }),
+    Efectividad:  createElement(Zap,    { size: 16 }),
+    Eficiencia:   createElement(Timer,  { size: 16 }),
+    Experiencia:  createElement(Smile,  { size: 16 }),
+    'Resolución por IA': createElement(Bot, { size: 16 }),
 }
 
 // ── Helper: formatea el NPS con su signo ("+42" o "-5") ─────────────────────
@@ -39,11 +42,11 @@ function formatNPS(val) {
 // ── Estado inicial de los KPI Cards mientras se espera la primera respuesta ──
 // Muestra '—' para no confundir al usuario con valores en cero
 const KPI_CARGANDO = [
-    { KPINombre: 'FCR',        kpiLabel: 'Resolución al Primer Contacto', metricaKPI: '—', color: 'green',  tendencia: 'Cargando…', positivo: true },
-    { KPINombre: 'TMO',        kpiLabel: 'Tiempo Medio de Operación',     metricaKPI: '—', color: 'blue',   tendencia: 'Cargando…', positivo: true },
-    { KPINombre: 'T-NPS',      kpiLabel: 'Satisfacción del Cliente',      metricaKPI: '—', color: 'amber',  tendencia: 'Cargando…', positivo: true },
-    { KPINombre: 'Tasa Éxito', kpiLabel: 'Sesiones Resueltas',            metricaKPI: '—', color: 'teal',   tendencia: 'Cargando…', positivo: true },
-    { KPINombre: 'Deflection', kpiLabel: 'Resuelto por IA',               metricaKPI: '—', color: 'violet', tendencia: 'Cargando…', positivo: true },
+    { KPINombre: 'FCR',        kpiLabel: 'Resolución al primer contacto', metricaKPI: '—', icono: CircleCheckBig,     tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'TMO',        kpiLabel: 'Tiempo medio de operación',     metricaKPI: '—', icono: Clock,              tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'T-NPS',      kpiLabel: 'Satisfacción del cliente',      metricaKPI: '—', icono: MessageCircleHeart, tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'Tasa de éxito', kpiLabel: 'Sesiones resueltas',         metricaKPI: '—', icono: TrendingUp,         tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'Resolución por IA', kpiLabel: 'Sesiones resueltas por IA',               metricaKPI: '—', icono: Bot,                tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
 ]
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -100,49 +103,53 @@ export function useDashboardData(filtros) {
             setKpisData([
                 {
                     KPINombre:  'FCR',
-                    kpiLabel:   'Resolución al Primer Contacto',
+                    kpiLabel:   'Resolución al primer contacto',
+                    icono:      CircleCheckBig,
                     metricaKPI: fcr?.fcr_pct != null ? `${fcr.fcr_pct}%` : '—',
                     textoKPI:   fcr?.total_sesiones > 0
-                        ? `${Number(fcr.total_sesiones).toLocaleString()} sesiones analizadas`
+                        ? `${formatoNumero.format(fcr.total_sesiones)} sesiones analizadas`
                         : 'Sin datos para el período',
-                    color: 'green', tendencia: 'Primer contacto', positivo: true,
+                    tendencia: 'Primer contacto',
                 },
                 {
                     KPINombre:  'TMO',
-                    kpiLabel:   'Tiempo Medio de Operación',
+                    kpiLabel:   'Tiempo medio de operación',
+                    icono:      Clock,
                     metricaKPI: tmo?.tmo_segundos != null ? `${tmo.tmo_segundos}s` : '—',
                     textoKPI:   tmo?.tmo_minutos != null
                         ? `${tmo.tmo_minutos} min promedio por sesión`
                         : 'Sin datos para el período',
-                    color: 'blue', tendencia: 'Duración promedio', positivo: true,
+                    tendencia: 'Duración promedio',
                 },
                 {
                     KPINombre:  'T-NPS',
-                    kpiLabel:   'Satisfacción del Cliente',
+                    kpiLabel:   'Satisfacción del cliente',
+                    icono:      MessageCircleHeart,
                     metricaKPI: nps?.tnps_score != null ? formatNPS(nps.tnps_score) : '—',
                     textoKPI:   nps?.promotores_pct != null
                         ? `Promotores ${nps.promotores_pct}% · Detractores ${nps.detractores_pct}%`
                         : 'Sin datos para el período',
-                    color: 'amber', tendencia: 'Net Promoter Score',
-                    positivo: nps?.tnps_score != null ? Number(nps.tnps_score) >= 0 : true,
+                    tendencia: 'Net Promoter Score',
                 },
                 {
-                    KPINombre:  'Tasa Éxito',
-                    kpiLabel:   'Sesiones Resueltas',
+                    KPINombre:  'Tasa de éxito',
+                    kpiLabel:   'Sesiones resueltas',
+                    icono:      TrendingUp,
                     metricaKPI: exito?.tasa_exito_pct != null ? `${exito.tasa_exito_pct}%` : '—',
                     textoKPI:   exito?.sesiones_resueltas > 0
-                        ? `${Number(exito.sesiones_resueltas).toLocaleString()} sesiones resueltas`
+                        ? `${formatoNumero.format(exito.sesiones_resueltas)} sesiones resueltas`
                         : 'Sin datos para el período',
-                    color: 'teal', tendencia: 'Resolución efectiva', positivo: true,
+                    tendencia: 'Resolución efectiva',
                 },
                 {
-                    KPINombre:  'Deflection',
-                    kpiLabel:   'Resuelto por IA',
+                    KPINombre:  'Resolución por IA',
+                    kpiLabel:   'Sesiones resueltas por IA',
+                    icono:      Bot,
                     metricaKPI: defl?.deflection_pct != null ? `${defl.deflection_pct}%` : '—',
                     textoKPI:   defl?.resueltas_por_ia > 0
-                        ? `${Number(defl.resueltas_por_ia).toLocaleString()} sesiones por IA`
+                        ? `${formatoNumero.format(defl.resueltas_por_ia)} sesiones por IA`
                         : 'Sin datos para el período',
-                    color: 'violet', tendencia: '↑ Meta: 70%', positivo: true,
+                    tendencia: 'Proporción del período',
                 },
             ])
 
@@ -158,7 +165,7 @@ export function useDashboardData(filtros) {
                         { nombre: 'Efectividad',  valor: Math.round(s.efectividad),  icono: ICONOS_DIM.Efectividad  },
                         { nombre: 'Eficiencia',   valor: Math.round(s.eficiencia),   icono: ICONOS_DIM.Eficiencia   },
                         { nombre: 'Experiencia',  valor: Math.round(s.experiencia),  icono: ICONOS_DIM.Experiencia  },
-                        { nombre: 'Proactividad', valor: Math.round(s.proactividad), icono: ICONOS_DIM.Proactividad },
+                        { nombre: 'Resolución por IA', valor: Math.round(s.proactividad), icono: ICONOS_DIM['Resolución por IA'] },
                     ],
                 })
             }
@@ -176,7 +183,10 @@ export function useDashboardData(filtros) {
             // Los demás se quedan igual
             if (!rPie.error)      setDataPie(rPie.data           ?? [])
             if (!rBarras.error)   setDataBarras(rBarras.data     ?? [])
-            if (!rSesiones.error) setDataSesiones(rSesiones.data ?? [])
+            // El RPC conserva el nombre heredado `tercerContacto`; en la UI exponemos el significado correcto.
+            if (!rSesiones.error) {
+                setDataSesiones((rSesiones.data ?? []).map(s => ({ ...s, resueltoPrimerContacto: s.tercerContacto })))
+            }
         }
 
         fetchTodo()
