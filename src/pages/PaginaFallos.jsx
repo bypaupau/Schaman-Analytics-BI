@@ -14,65 +14,46 @@ import { useFallosData }    from '../hooks/useFallosData'
 import { GraficoBarrasGen } from '../components/GraficoBarrasGen'
 import { GraficoPie }       from '../components/GraficoPie'
 import { KPICard }          from '../components/KPICard'
-import {AlertOctagon, Activity, CheckCircle2, PieChartIcon} from 'lucide-react'
+import { Card }             from '../components/Card'
+import { PageHeader }       from '../components/PageHeader'
+import { STATUS, normalizar, formatoNumero } from '../lib/chartTheme'
+import { AlertOctagon, Activity, CheckCircle2, PieChartIcon, CalendarDays } from 'lucide-react'
 
-// ── Helper: color de prioridad insensible a mayúsculas y tildes ──────────────
-function normalizarTexto(str) {
-    return (str ?? '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-}
-
-const COLORES_PRIORIDAD_NORM = {
-    'critica': { bg: '#FEF2F2', text: '#EF4444', border: '#FECACA' },
-    'alta':    { bg: '#FFF7ED', text: '#F97316', border: '#FED7AA' },
-    'media':   { bg: '#FEFCE8', text: '#EAB308', border: '#FEF08A' },
-    'baja':    { bg: '#EFF6FF', text: '#3B82F6', border: '#BFDBFE' },
-}
+// ── Prioridad → color de ESTADO (insensible a mayúsculas y tildes) ───────────
+// Es una escala ordenada: crítica > alta > media > baja
+const PRIORIDADES = [
+    { clave: 'critica', label: 'Crítica', ...STATUS.critical },
+    { clave: 'alta',    label: 'Alta',    ...STATUS.serious  },
+    { clave: 'media',   label: 'Media',   ...STATUS.warning  },
+    { clave: 'baja',    label: 'Baja',    ...STATUS.neutral  },
+]
 
 function getPrioridadColor(prioridad) {
-    return COLORES_PRIORIDAD_NORM[normalizarTexto(prioridad)] ?? COLORES_PRIORIDAD_NORM['baja']
+    return PRIORIDADES.find(p => p.clave === normalizar(prioridad)) ?? PRIORIDADES[3]
 }
 
-// ── Helper: color de dispositivo según tasa de fallos ────────────
+// ── Gravedad del dispositivo según su tasa de fallos ─────────────────────────
+const GRAVEDAD = [
+    { min: 50, label: '≥ 50% fallos',  ...STATUS.critical },
+    { min: 30, label: '30–49%',        ...STATUS.serious  },
+    { min: 15, label: '15–29%',        ...STATUS.warning  },
+    { min: 0,  label: '< 15%',         ...STATUS.good     },
+]
+
 function colorDispositivoPorFallos(pct_fallos) {
-    if (pct_fallos >= 50) return '#EF4444'   // rojo
-    if (pct_fallos >= 30) return '#F97316'   // naranja
-    if (pct_fallos >= 15) return '#EAB308'   // amarillo
-    return '#10B981'                          // verde
+    return GRAVEDAD.find(g => pct_fallos >= g.min).fill
 }
 
-// ── Card genérica para envolver cada gráfico ──
-function Card({ titulo, subtitulo, children }) {
+// Leyenda compacta para explicar qué significa cada color
+function LeyendaColores({ items, titulo }) {
     return (
-        <div style={{
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow)',
-            borderRadius: 16,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-        }}>
-            <div style={{ padding: '16px 20px 8px', borderBottom: '1px solid var(--border)' }}>
-                <p style={{
-                    fontSize: 11, fontWeight: 700,
-                    color: 'var(--text-light)',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                }}>
-                    {titulo}
-                </p>
-                {subtitulo && (
-                    <p style={{ fontSize: 11, color: 'var(--text-light)', marginTop: 4 }}>
-                        {subtitulo}
-                    </p>
-                )}
-            </div>
-            <div style={{ padding: '12px 16px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                {children}
-            </div>
+        <div className="legend" aria-label={titulo} style={{ marginBottom: 12 }}>
+            {items.map(it => (
+                <span key={it.label} className="legend-item">
+                    <span className="dot" style={{ background: it.fill, borderRadius: 3 }} />
+                    {it.label}
+                </span>
+            ))}
         </div>
     )
 }
@@ -80,46 +61,45 @@ function Card({ titulo, subtitulo, children }) {
 // ── Tabla de resolución por prioridad ────────────────────────────────────────
 function TablaPrioridad({ data }) {
     if (!data || data.length === 0) {
-        return <p style={{ color: 'var(--text-light)', fontSize: 13, textAlign: 'center', padding: 24 }}>Sin datos disponibles</p>
+        return <p className="empty-state" style={{ padding: 24 }}>Sin datos disponibles</p>
     }
 
     return (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <table className="data-table" style={{ fontSize: 15 }}>
             <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['Prioridad', 'Total sesiones', 'Resueltas', 'Tasa %'].map(h => (
-                    <th key={h} style={{
-                        textAlign: h === 'Prioridad' ? 'left' : 'right',
-                        padding: '6px 10px', fontSize: 11, fontWeight: 700,
-                        color: 'var(--text-light)', letterSpacing: '0.05em', textTransform: 'uppercase',
-                    }}>{h}</th>
+            <tr>
+                {['Prioridad', 'Total sesiones', 'Resueltas', 'Tasa de resolución'].map(h => (
+                    <th key={h} scope="col" style={{ textAlign: h === 'Prioridad' ? 'left' : 'right', padding: '12px 16px' }}>{h}</th>
                 ))}
             </tr>
             </thead>
             <tbody>
             {data.map((row, i) => {
                 const c = getPrioridadColor(row.prioridad)
+                const tasa = Number(row.tasa_resolucion)
+                const t = tasa >= 75 ? STATUS.good : tasa >= 50 ? STATUS.warning : STATUS.critical
                 return (
-                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td style={{ padding: '10px 10px' }}>
-                                <span style={{
-                                    display: 'inline-block', padding: '2px 10px', borderRadius: 999,
-                                    fontSize: 11, fontWeight: 700, background: c.bg, color: c.text, border: `1px solid ${c.border}`,
-                                }}>
-                                    {row.prioridad}
+                    <tr key={i}>
+                        <td style={{ padding: '14px 16px' }}>
+                            <span className="chip" style={{ background: c.soft, color: c.ink }}>
+                                <span className="dot" style={{ background: c.fill }} />
+                                {row.prioridad}
+                            </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--text)' }}>
+                            {formatoNumero.format(row.total_sesiones)}
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                            {formatoNumero.format(row.resueltas)}
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                            {/* Mini barra + valor: el color refuerza el número */}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                                <span aria-hidden="true" style={{ width: 72, height: 6, borderRadius: 999, background: 'var(--grid)', overflow: 'hidden' }}>
+                                    <span style={{ display: 'block', height: '100%', width: `${Math.min(tasa, 100)}%`, background: t.fill, borderRadius: 999 }} />
                                 </span>
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, color: 'var(--text)' }}>
-                            {Number(row.total_sesiones).toLocaleString()}
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'right', color: '#10B981', fontWeight: 600 }}>
-                            {Number(row.resueltas).toLocaleString()}
-                        </td>
-                        <td style={{
-                            padding: '10px', textAlign: 'right', fontWeight: 700,
-                            color: row.tasa_resolucion >= 75 ? '#10B981' : row.tasa_resolucion >= 50 ? '#EAB308' : '#EF4444',
-                        }}>
-                            {row.tasa_resolucion}%
+                                <strong style={{ color: t.ink, minWidth: 44 }}>{tasa}%</strong>
+                            </span>
                         </td>
                     </tr>
                 )
@@ -143,122 +123,120 @@ export function PaginaFallos({ anio }) {
         )
         : null
 
-    const criticaRow = porPrioridad?.find(p => normalizarTexto(p.prioridad) === 'critica')
+    const criticaRow = porPrioridad?.find(p => normalizar(p.prioridad) === 'critica')
 
     const dispositivosConColor = (topDispositivos ?? []).map(d => ({
         ...d,
         color: colorDispositivoPorFallos(d.pct_fallos ?? 0),
     }))
 
-    const problemasConColor = (topProblemas ?? []).map(p => {
-        const c = getPrioridadColor(p.prioridad);
-        return { ...p, color: c.text }
-    });
+    const problemasConColor = (topProblemas ?? []).map(p => ({
+        ...p, color: getPrioridadColor(p.prioridad).fill,
+    }))
 
     const colorResolucion = tasaGlobal == null
-        ? 'blue' : tasaGlobal >= 75 ? 'green' : 'red'
+        ? 'brand' : tasaGlobal >= 75 ? 'good' : 'critical'
 
     const pctProblema = totalSesiones > 0 && topProblema
         ? Math.round((Number(topProblema.total_sesiones) / totalSesiones) * 100)
         : 0;
 
     return (
-        <main style={{ padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <main className="page">
 
             {/* ── Título de página ── */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--brand)', margin: 0 }}>
-                    Análisis de Fallos
-                </h1>
-                <p style={{ fontSize: 13, color: 'var(--text-light)', margin: 0 }}>
-                    Problemas más frecuentes · Dispositivos con mayor tasa de fallo · Año {anio}
-                </p>
-            </div>
+            <PageHeader
+                titulo="Análisis de fallos"
+                subtitulo="Problemas más frecuentes y dispositivos con mayor tasa de fallo"
+            >
+                <span className="chip" style={{ background: 'var(--card)', color: 'var(--text)', boxShadow: 'var(--shadow)', border: '1px solid var(--border)', padding: '8px 14px', fontSize: 14 }}>
+                    <CalendarDays size={16} aria-hidden="true" style={{ color: 'var(--brand)' }} />
+                    Año {anio}
+                </span>
+            </PageHeader>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="grid-kpis">
 
                 <KPICard
                     icono={Activity}
                     KPINombre="Sesiones con fallo"
-                    kpiLabel="Sesiones que terminaron sin resolverse"
-                    metricaKPI={totalSesiones > 0 ? totalSesiones.toLocaleString() : '—'}
+                    kpiLabel="Terminaron sin resolverse"
+                    metricaKPI={totalSesiones > 0 ? formatoNumero.format(totalSesiones) : '—'}
                     textoKPI={topProblema ? `Distribuidas en ${topProblemas.length} tipos de problema distintos` : 'Sin datos para el período'}
-                    color="blue"
                     tendencia="Volumen anual"
                 />
 
                 <KPICard
                     icono={AlertOctagon}
-                    KPINombre="Problema Top"
-                    kpiLabel="Problema más frecuente"
+                    KPINombre="Problema principal"
+                    kpiLabel="El más frecuente del año"
                     metricaKPI={topProblema ? topProblema.problema : '—'}
                     esTextoLargo={true} /* ¡Esto adapta la tipografía! */
-                    textoKPI={topProblema ? `${topProblema.total_sesiones} sesiones generadas este año` : 'Sin datos'}
-                    color="violet"
+                    textoKPI={topProblema ? `${formatoNumero.format(topProblema.total_sesiones)} sesiones generadas este año` : 'Sin datos'}
                     tendencia={topProblema ? `Prioridad ${topProblema.prioridad}` : undefined}
                 />
 
                 <KPICard
                     icono={PieChartIcon}
-                    KPINombre="Impacto del Problema"
+                    KPINombre="Impacto del problema"
                     kpiLabel="Peso sobre el total de fallos"
                     metricaKPI={topProblema ? `${pctProblema}%` : '—'}
-                    textoKPI={topProblema ? `${topProblema.total_sesiones} de ${totalSesiones} sesiones totales` : 'Sin datos'}
-                    color="amber"
+                    textoKPI={topProblema ? `${formatoNumero.format(topProblema.total_sesiones)} de ${formatoNumero.format(totalSesiones)} sesiones totales` : 'Sin datos'}
                     tendencia="Concentración"
                 />
 
                 <KPICard
                     icono={CheckCircle2}
                     KPINombre="Tasa de resolución"
-                    kpiLabel="Ponderada por volumen de sesiones"
+                    kpiLabel="Ponderada por volumen"
                     metricaKPI={tasaGlobal != null ? `${tasaGlobal}%` : '—'}
-                    textoKPI={criticaRow ? `Críticos: ${criticaRow.tasa_resolucion}% ${criticaRow.tasa_resolucion >= 75 ? '✓' : '⚠'} · Meta global: 75%` : 'Sin datos'}
+                    textoKPI={criticaRow ? `Críticos: ${criticaRow.tasa_resolucion}% · Meta global: 75%` : 'Sin datos'}
                     color={colorResolucion}
-                    tendencia={tasaGlobal != null && tasaGlobal >= 75 ? '✓ Meta alcanzada' : '⚠ Por debajo del objetivo'}
+                    tendencia={tasaGlobal == null ? undefined : tasaGlobal >= 75 ? 'Meta alcanzada' : 'Por debajo del objetivo'}
                 />
             </div>
 
             {/* ── Fila 2: Top 10 Problemas (2/3) + Categorías (1/3) ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+            <div className="grid-2-1">
                 <Card
-                    titulo="Top 10 Problemas más frecuentes"
-                    subtitulo="Número de sesiones generadas por cada problema · color = prioridad"
+                    titulo="Top 10 problemas más frecuentes"
+                    subtitulo="Sesiones generadas por cada problema, coloreadas por prioridad"
                 >
-                    <div style={{ height: 320, width: '100%' }}>
-                        <GraficoBarrasGen
-                            data={problemasConColor}
-                            labelKey="problema"
-                            valueKey="total_sesiones"
-                            colorKey="color"
-                            suffix=" ses."
-                        />
-                    </div>
+                    <LeyendaColores titulo="Prioridad" items={PRIORIDADES} />
+                    <GraficoBarrasGen
+                        data={problemasConColor}
+                        labelKey="problema"
+                        valueKey="total_sesiones"
+                        colorKey="color"
+                        suffix=" ses."
+                    />
                 </Card>
 
                 <Card
-                    titulo="Distribución por Categoría"
+                    titulo="Distribución por categoría"
                     subtitulo="% de sesiones según tipo de problema"
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
-                        <GraficoPie data={porCategoria} />
-                    </div>
+                    <GraficoPie data={porCategoria} />
                 </Card>
             </div>
 
             {/* ── Fila 3: Prioridad (1/2) + Dispositivos (1/2) ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="grid-2">
                 <Card
                     titulo="Resolución por prioridad"
-                    subtitulo="¿Se resuelven más los críticos?"
+                    subtitulo="¿Se resuelven más los problemas críticos? Meta: 75%"
+                    bodyStyle={{ padding: '12px 0 8px' }}
                 >
-                    <TablaPrioridad data={porPrioridad} />
+                    <div style={{ overflowX: 'auto' }}>
+                        <TablaPrioridad data={porPrioridad} />
+                    </div>
                 </Card>
 
                 <Card
-                    titulo="Fallos por Dispositivo"
-                    subtitulo="Columna = nº de fallos · Color = gravedad"
+                    titulo="Fallos por dispositivo"
+                    subtitulo="Sesiones con fallo por modelo, coloreadas por tasa de fallo"
                 >
+                    <LeyendaColores titulo="Tasa de fallo" items={GRAVEDAD} />
                     <GraficoBarrasGen
                         data={dispositivosConColor}
                         labelKey="modelo"
