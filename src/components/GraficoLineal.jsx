@@ -1,11 +1,17 @@
 // GraficoLineal.jsx ─ Evolución mensual FCR & TMO
-// Verde (#10B981) para FCR (buen resultado), azul (#3B82F6) para TMO (tiempo).
-// Colores de la misma paleta que el resto del dashboard.
+//
+// FCR (%) y TMO (segundos) tienen escalas distintas. En vez de un gráfico con
+// DOS ejes Y (que inventa correlaciones según cómo se alineen las escalas),
+// usamos dos mini-gráficos apilados ("small multiples") que comparten el eje X.
+// `syncId` sincroniza el cursor: al pasar el mouse por un mes, ambos lo marcan.
 
 import {
-    LineChart, Line, XAxis, YAxis,
-    CartesianGrid, Tooltip, Legend, ResponsiveContainer
+    AreaChart, Area, XAxis, YAxis,
+    CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
+import { ChartTooltip } from './ChartTooltip.jsx'
+import { EstadoVacio } from './Card.jsx'
+import { SERIES, AXIS_TICK, GRID_PROPS, CURSOR_LINE } from '../lib/chartTheme'
 
 const dataMock = [
     { mes: "Nov '22", fcr: 88, tmo: 240 },
@@ -22,74 +28,85 @@ const dataMock = [
     { mes: "Oct '23", fcr: 92, tmo: 245 },
 ]
 
-const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null
+const SERIES_LINEAL = [
+    { key: 'fcr', nombre: 'FCR', unidad: '%', color: SERIES[0], descripcion: 'Resolución al primer contacto' },
+    { key: 'tmo', nombre: 'TMO', unidad: 's', color: SERIES[2], descripcion: 'Tiempo medio de operación' },
+]
+
+function MiniSerie({ data, serie, mostrarEjeX }) {
+    const { key, nombre, unidad, color, descripcion } = serie
+    const ultimo = data[data.length - 1]?.[key]
+    const gradId = `grad-${key}`
+
     return (
-        <div style={{
-            background: '#fff', border: '1px solid var(--border)',
-            borderRadius: 10, padding: '8px 12px', fontSize: 12,
-            boxShadow: 'var(--shadow)',
-        }}>
-            <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{label}</p>
-            {payload.map(p => (
-                <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
-                    <span style={{ color: 'var(--text-muted)' }}>{p.name}:</span>
-                    <span style={{ fontWeight: 700, color: 'var(--text)' }}>{p.value}</span>
-                </div>
-            ))}
+        <div>
+            {/* Encabezado con etiqueta directa: nombre + último valor */}
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-muted)' }}>
+                    <span className="dot" style={{ background: color }} />
+                    <strong style={{ color: 'var(--text)' }}>{nombre}</strong>
+                    <span style={{ color: 'var(--text-light)' }}>{descripcion}</span>
+                </span>
+                {ultimo != null && (
+                    <span className="tabular" style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
+                        {ultimo}{unidad}
+                    </span>
+                )}
+            </div>
+
+            <ResponsiveContainer width="100%" height={mostrarEjeX ? 132 : 108}>
+                <AreaChart data={data} syncId="fcr-tmo" margin={{ top: 6, right: 6, bottom: 0, left: 0 }}>
+                    <defs>
+                        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"   stopColor={color} stopOpacity={0.22} />
+                            <stop offset="100%" stopColor={color} stopOpacity={0} />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid {...GRID_PROPS} vertical={false} />
+                    <XAxis
+                        dataKey="mes"
+                        hide={!mostrarEjeX}
+                        tick={AXIS_TICK}
+                        axisLine={false} tickLine={false}
+                        interval="preserveStartEnd" minTickGap={18}
+                    />
+                    <YAxis
+                        domain={['dataMin - 3', 'dataMax + 3']}
+                        allowDecimals={false}
+                        tickCount={3}
+                        tick={AXIS_TICK}
+                        tickFormatter={v => `${Math.round(v)}${unidad}`}
+                        axisLine={false} tickLine={false}
+                        width={44}
+                    />
+                    <Tooltip
+                        cursor={CURSOR_LINE}
+                        content={<ChartTooltip formato={v => `${v}${unidad}`} />}
+                    />
+                    <Area
+                        type="monotone" dataKey={key} name={nombre}
+                        stroke={color} strokeWidth={2} fill={`url(#${gradId})`}
+                        dot={false}
+                        activeDot={{ r: 5, strokeWidth: 2, stroke: '#FFFFFF', fill: color }}
+                    />
+                </AreaChart>
+            </ResponsiveContainer>
         </div>
     )
 }
 
-export function GraficoLineal({ data}) {
-    if (!data) {
-        return <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: 13 }}>Cargando gráfico...</div>
-    }
+// Sin valor por defecto: `undefined` significa "cargando" (ver useDashboardData)
+export function GraficoLineal({ data }) {
+    if (!data) return <EstadoVacio alto={280}>Cargando gráfico…</EstadoVacio>
 
     // Si le enviamos un arreglo vacío
-    if (Array.isArray(data) && data.length === 0) {
-        return <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: 13 }}>Sin datos para este filtro</div>
-    }
+    if (Array.isArray(data) && data.length === 0) return <EstadoVacio alto={280} />
 
     return (
-        <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: -4 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E4EAF4" vertical={false} />
-                <XAxis
-                    dataKey="mes"
-                    tick={{ fontSize: 10, fill: '#94A3B8' }}
-                    axisLine={false} tickLine={false}
-                    interval={2}
-                />
-                <YAxis
-                    yAxisId="fcr" domain={[75, 100]}
-                    tick={{ fontSize: 10, fill: '#94A3B8' }}
-                    axisLine={false} tickLine={false}
-                    width={28}
-                />
-                <YAxis
-                    yAxisId="tmo" orientation="right" domain={[220, 260]}
-                    tick={{ fontSize: 10, fill: '#94A3B8' }}
-                    axisLine={false} tickLine={false}
-                    width={28}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                    wrapperStyle={{ fontSize: 11, color: '#94A3B8', paddingTop: 8 }}
-                    iconType="circle" iconSize={8}
-                />
-                <Line
-                    yAxisId="fcr" type="monotone" dataKey="fcr"
-                    name="FCR (%)" stroke="#10B981"
-                    dot={false} strokeWidth={2.5} strokeLinecap="round"
-                />
-                <Line
-                    yAxisId="tmo" type="monotone" dataKey="tmo"
-                    name="TMO (s)" stroke="#3B82F6"
-                    dot={false} strokeWidth={2.5} strokeLinecap="round"
-                />
-            </LineChart>
-        </ResponsiveContainer>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {SERIES_LINEAL.map((serie, i) => (
+                <MiniSerie key={serie.key} data={data} serie={serie} mostrarEjeX={i === SERIES_LINEAL.length - 1} />
+            ))}
+        </div>
     )
 }

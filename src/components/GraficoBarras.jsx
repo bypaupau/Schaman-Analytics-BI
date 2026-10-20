@@ -1,70 +1,44 @@
 // GraficoBarras.jsx ─ Barras HORIZONTALES: Tasa de Éxito por Zona
 // Barras horizontales caben perfecto en 1/3 de ancho, son fáciles de leer
-// y muestran un KPI real (KPI #3 del proyecto)
+// y muestran un KPI real (KPI #3 del proyecto).
+//
+// Todas las barras miden lo mismo (% de éxito) → un solo color (teal de marca).
+// Colorear cada zona distinto agregaría ruido sin aportar información.
 
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
-    Tooltip, Cell, ResponsiveContainer, LabelList
+    Tooltip, ResponsiveContainer, LabelList
 } from 'recharts'
+import { ChartTooltip } from './ChartTooltip.jsx'
+import { EstadoVacio } from './Card.jsx'
+import { SERIES, AXIS_TICK, AXIS_TICK_LABEL, GRID_PROPS, CURSOR_BAR, INK, anchoEtiquetas } from '../lib/chartTheme'
 
-const dataMock = [
-    { zona: 'Norte',  exito: 94, color: '#3B82F6' },
-    { zona: 'Centro', exito: 90, color: '#0EA5E9' },
-    { zona: 'Sur',    exito: 85, color: '#8B5CF6' },
-]
+const COLOR_BARRA = SERIES[0]
 
-// Tooltip limpio coherente con el dashboard
-const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null
-    const d = payload[0]
-    return (
-        <div style={{
-            background: '#fff',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            padding: '8px 12px',
-            fontSize: 12,
-            boxShadow: 'var(--shadow)',
-        }}>
-            <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{d.payload.zona}</p>
-            <p style={{ color: d.fill, fontWeight: 600 }}>Tasa de Éxito: {d.value}%</p>
-        </div>
-    )
-}
+// Sin valor por defecto: `undefined` significa "cargando" (ver useDashboardData)
+export function GraficoBarras({ data }) {
+    if (!data) return <EstadoVacio alto={220}>Cargando gráfico…</EstadoVacio>
 
-export function GraficoBarras({ data = dataMock }) {
     // Si llega array vacío (filtro sin resultados) → mensaje "sin datos"
-    if (Array.isArray(data) && data.length === 0) {
-        return (
-            <div style={{
-                height: 160,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-light)',
-                fontSize: 13,
-            }}>
-                Sin datos para este filtro
-            </div>
-        )
-    }
+    if (data.length === 0) return <EstadoVacio alto={220} />
 
-    // Altura dinámica: mínimo 200px, 30px por zona para que no se apilen
-    const altura = Math.max(200, data.length * 30)
+    // Altura dinámica: mínimo 220px, 40px por zona para que no se apilen
+    const altura = Math.max(220, data.length * 40)
 
     return (
         <ResponsiveContainer width="100%" height={altura}>
             <BarChart
                 data={data}
                 layout="vertical"
-                margin={{ top: 4, right: 44, bottom: 4, left: 0 }}
-                barSize={18}
+                margin={{ top: 4, right: 48, bottom: 4, left: 0 }}
+                barCategoryGap={8}
+                maxBarSize={22}
             >
-                <CartesianGrid strokeDasharray="3 3" stroke="#E4EAF4" horizontal={false} />
+                <CartesianGrid {...GRID_PROPS} horizontal={false} />
                 <XAxis
                     type="number"
                     domain={[0, 100]}
-                    tick={{ fontSize: 10, fill: '#94A3B8' }}
+                    tick={AXIS_TICK}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={v => `${v}%`}
@@ -72,22 +46,22 @@ export function GraficoBarras({ data = dataMock }) {
                 <YAxis
                     type="category"
                     dataKey="zona"
-                    tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
+                    tick={AXIS_TICK_LABEL}
                     axisLine={false}
                     tickLine={false}
-                    width={130}
+                    width={anchoEtiquetas(data, 'zona', 175)}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(15,52,96,0.04)' }} />
-                <Bar dataKey="exito" radius={[0, 6, 6, 0]}>
-                    {data.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                    ))}
-                    {/* Etiqueta con el % dentro/fuera de la barra */}
+                <Tooltip
+                    cursor={CURSOR_BAR}
+                    content={<ChartTooltip filas={p => [{ color: COLOR_BARRA, nombre: 'Tasa de éxito', valor: `${p[0].value}%` }]} />}
+                />
+                <Bar dataKey="exito" fill={COLOR_BARRA} radius={[0, 4, 4, 0]}>
+                    {/* Etiqueta con el % al final de la barra */}
                     <LabelList
                         dataKey="exito"
                         position="right"
                         formatter={v => `${v}%`}
-                        style={{ fontSize: 12, fontWeight: 700, fill: '#64748B' }}
+                        style={{ fontSize: 13, fontWeight: 700, fill: INK.text, fontFamily: 'Figtree, sans-serif' }}
                     />
                 </Bar>
             </BarChart>

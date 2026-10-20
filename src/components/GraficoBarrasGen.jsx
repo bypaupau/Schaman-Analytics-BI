@@ -22,43 +22,28 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, Cell, ResponsiveContainer, LabelList
 } from 'recharts'
+import { ChartTooltip } from './ChartTooltip.jsx'
+import { EstadoVacio } from './Card.jsx'
+import {
+    SERIES, STATUS, INK, AXIS_TICK, AXIS_TICK_LABEL, GRID_PROPS, CURSOR_BAR,
+    anchoEtiquetas, formatoNumero,
+} from '../lib/chartTheme'
 
-// Tooltip personalizado — mismo estilo visual que el resto del dashboard
-const CustomTooltip = ({ active, payload, labelKey, suffix }) => {
-    if (!active || !payload?.length) return null
+const ESTILO_ETIQUETA = { fontSize: 13, fontWeight: 700, fill: INK.text, fontFamily: 'Figtree, sans-serif' }
+
+// Filas del tooltip: valor principal + datos extra si el objeto los trae
+function filasTooltip(payload, suffix) {
     const d = payload[0]
-    return (
-        <div style={{
-            background: '#fff',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            padding: '8px 12px',
-            fontSize: 12,
-            boxShadow: 'var(--shadow)',
-            maxWidth: 240,
-        }}>
-            {/* Nombre del elemento (problema, modelo, etc.) */}
-            <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4, wordBreak: 'break-word' }}>
-                {d.payload[labelKey]}
-            </p>
-            {/* Valor principal con su sufijo */}
-            <p style={{ color: d.fill, fontWeight: 600 }}>
-                {d.value.toLocaleString()}{suffix}
-            </p>
-            {/* Si el objeto tiene tasa_resolucion, la mostramos también */}
-            {d.payload.tasa_resolucion != null && (
-                <p style={{ color: 'var(--text-light)', marginTop: 2 }}>
-                    Resuelta: {d.payload.tasa_resolucion}%
-                </p>
-            )}
-            {/* Si el objeto tiene pct_fallos, la mostramos — % de sesiones fallidas */}
-            {d.payload.pct_fallos != null && (
-                <p style={{ color: '#EF4444', marginTop: 2 }}>
-                    % sesiones con fallo: {d.payload.pct_fallos}%
-                </p>
-            )}
-        </div>
-    )
+    const filas = [{ color: d.payload.fill ?? d.color, nombre: 'Sesiones', valor: `${formatoNumero.format(d.value)}${suffix}` }]
+    // Si el objeto tiene tasa_resolucion, la mostramos también
+    if (d.payload.tasa_resolucion != null) {
+        filas.push({ nombre: 'Resuelta', valor: `${d.payload.tasa_resolucion}%` })
+    }
+    // Si el objeto tiene pct_fallos, la mostramos — % de sesiones fallidas
+    if (d.payload.pct_fallos != null) {
+        filas.push({ color: STATUS.critical.fill, nombre: '% sesiones con fallo', valor: `${d.payload.pct_fallos}%` })
+    }
+    return filas
 }
 
 export function GraficoBarrasGen({
@@ -71,68 +56,54 @@ export function GraficoBarrasGen({
     orientation = 'horizontal',   // 'horizontal' | 'vertical'
 }) {
     // Sin datos → mensaje de estado vacío en lugar de una gráfica en blanco
-    if (!data || data.length === 0) {
-        return (
-            <div style={{
-                height: 160,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-light)',
-                fontSize: 13,
-            }}>
-                Sin datos disponibles
-            </div>
-        )
-    }
+    if (!data || data.length === 0) return <EstadoVacio alto={200}>Sin datos disponibles</EstadoVacio>
 
-    // El color de cada barra puede venir del dato (colorKey) o usar azul por defecto
-    const getColor = (entry) => entry[colorKey] ?? '#3B82F6'
+    // El color de cada barra puede venir del dato (colorKey) o usar el teal de marca
+    const getColor = (entry) => entry[colorKey] ?? SERIES[0]
+    const tooltip = <ChartTooltip titulo={p => p[0].payload[labelKey]} filas={p => filasTooltip(p, suffix)} />
 
     // ── MODO HORIZONTAL (layout="vertical" en Recharts) ──────────────────────
     // Confuso pero así funciona Recharts: "vertical" significa que las barras
     // crecen en el eje horizontal (de izquierda a derecha). Es la vista clásica
     // de "ranking" donde los nombres van en el eje Y.
     if (orientation === 'horizontal') {
-        const altura = Math.max(200, data.length * 36)
+        const altura = Math.max(220, data.length * 40)
         return (
             <ResponsiveContainer width="100%" height={altura}>
                 <BarChart
                     data={data}
                     layout="vertical"
-                    margin={{ top: 4, right: 60, bottom: 4, left: 0 }}
-                    barSize={16}
+                    margin={{ top: 4, right: 72, bottom: 4, left: 0 }}
+                    barCategoryGap={8}
+                    maxBarSize={22}
                 >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E4EAF4" horizontal={false} />
+                    <CartesianGrid {...GRID_PROPS} horizontal={false} />
                     <XAxis
                         type="number"
-                        domain={maxValue ? [0, maxValue] : ['auto', 'auto']}
-                        tick={{ fontSize: 10, fill: '#94A3B8' }}
+                        domain={maxValue ? [0, maxValue] : [0, 'auto']}
+                        tick={AXIS_TICK}
                         axisLine={false}
                         tickLine={false}
-                        tickFormatter={v => `${v.toLocaleString()}${suffix}`}
+                        tickFormatter={v => formatoNumero.format(v)}
                     />
                     <YAxis
                         type="category"
                         dataKey={labelKey}
-                        tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
+                        tick={AXIS_TICK_LABEL}
                         axisLine={false}
                         tickLine={false}
-                        width={160}
+                        width={anchoEtiquetas(data, labelKey, 200)}
                     />
-                    <Tooltip
-                        content={<CustomTooltip labelKey={labelKey} suffix={suffix} />}
-                        cursor={{ fill: 'rgba(15,52,96,0.04)' }}
-                    />
-                    <Bar dataKey={valueKey} radius={[0, 6, 6, 0]}>
+                    <Tooltip content={tooltip} cursor={CURSOR_BAR} />
+                    <Bar dataKey={valueKey} radius={[0, 4, 4, 0]}>
                         {data.map((entry, i) => (
                             <Cell key={i} fill={getColor(entry)} />
                         ))}
                         <LabelList
                             dataKey={valueKey}
                             position="right"
-                            formatter={v => `${v.toLocaleString()}${suffix}`}
-                            style={{ fontSize: 11, fontWeight: 700, fill: '#64748B' }}
+                            formatter={v => `${formatoNumero.format(v)}${suffix}`}
+                            style={ESTILO_ETIQUETA}
                         />
                     </Bar>
                 </BarChart>
@@ -146,40 +117,39 @@ export function GraficoBarrasGen({
     // mostrarse en el eje X. Las etiquetas se inclinan 35° para que no se
     // solapen aunque los nombres sean algo largos.
     return (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={320}>
             <BarChart
                 data={data}
                 // Sin layout="vertical" → Recharts usa columnas (el default)
-                margin={{ top: 36, right: 16, bottom: 70, left: 0 }}
-                barSize={28}
+                margin={{ top: 28, right: 8, bottom: 8, left: 0 }}
+                barCategoryGap="22%"
+                maxBarSize={40}
             >
-                <CartesianGrid strokeDasharray="3 3" stroke="#E4EAF4" vertical={false} />
+                <CartesianGrid {...GRID_PROPS} vertical={false} />
                 <XAxis
                     type="category"
                     dataKey={labelKey}
                     axisLine={false}
                     tickLine={false}
                     // Inclinamos las etiquetas para que quepan sin solaparse
-                    tick={{ fontSize: 10, fill: '#64748B', fontWeight: 500 }}
+                    tick={AXIS_TICK_LABEL}
                     angle={-35}
                     textAnchor="end"
                     interval={0}
                     // height extra para dejar espacio a las etiquetas inclinadas
-                    height={70}
+                    height={84}
                 />
                 <YAxis
                     type="number"
-                    domain={maxValue ? [0, maxValue] : ['auto', 'auto']}
-                    tick={{ fontSize: 10, fill: '#94A3B8' }}
+                    domain={maxValue ? [0, maxValue] : [0, 'auto']}
+                    tick={AXIS_TICK}
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={v => `${v.toLocaleString()}${suffix}`}
+                    width={44}
+                    tickFormatter={v => formatoNumero.format(v)}
                 />
-                <Tooltip
-                    content={<CustomTooltip labelKey={labelKey} suffix={suffix} />}
-                    cursor={{ fill: 'rgba(15,52,96,0.04)' }}
-                />
-                <Bar dataKey={valueKey} radius={[6, 6, 0, 0]}>
+                <Tooltip content={tooltip} cursor={CURSOR_BAR} />
+                <Bar dataKey={valueKey} radius={[4, 4, 0, 0]}>
                     {data.map((entry, i) => (
                         <Cell key={i} fill={getColor(entry)} />
                     ))}
@@ -187,8 +157,8 @@ export function GraficoBarrasGen({
                     <LabelList
                         dataKey={valueKey}
                         position="top"
-                        formatter={v => `${v.toLocaleString()}${suffix}`}
-                        style={{ fontSize: 11, fontWeight: 700, fill: '#64748B' }}
+                        formatter={v => formatoNumero.format(v)}
+                        style={ESTILO_ETIQUETA}
                     />
                 </Bar>
             </BarChart>
