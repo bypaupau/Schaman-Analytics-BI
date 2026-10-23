@@ -73,9 +73,7 @@ function App() {
                         <PageHeader
                             titulo="Panel general"
                             subtitulo={`Inteligencia de resolución omnicanal - ${periodo}`}
-                        >
-
-                        </PageHeader>
+                        />
 
                         <MenuFiltros filtros={filtrosParaMenu} onCambio={handleFiltroChange} />
 
