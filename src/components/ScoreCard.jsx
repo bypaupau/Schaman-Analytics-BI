@@ -47,7 +47,7 @@ export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMoc
                 flex: '1 1 min(400px, 100%)',
                 padding: '24px 28px',
                 color: '#FFFFFF',
-                background: 'radial-gradient(420px 220px at 100% 0%, rgba(90,169,214,0.35), transparent 70%), linear-gradient(135deg, var(--brand-deep) 0%, var(--brand-strong) 55%, var(--brand) 100%)',
+                background: 'radial-gradient(420px 220px at 100% 0%, rgba(247,217,58,0.30), transparent 70%), linear-gradient(135deg, var(--brand-ink) 0%, var(--brand) 55%, #6FB1F5 100%)',
                 display: 'flex',
                 flexWrap: 'wrap',          // en móvil el gauge y el número se apilan
                 alignItems: 'center',

@@ -22,7 +22,7 @@ export function ChartTooltip({ active, payload, label, titulo, filas, formato = 
             padding: '10px 14px',
             fontSize: 13,
             lineHeight: 1.45,
-            boxShadow: '0 12px 28px -8px rgba(7,63,59,0.45)',
+            boxShadow: '0 12px 28px -8px rgba(14,34,64,0.45)',
             maxWidth: 260,
             fontVariantNumeric: 'tabular-nums',
         }}>

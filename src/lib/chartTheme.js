@@ -16,32 +16,32 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 export const SERIES = [
-    '#0F8F84', // 1 teal (marca)
-    '#EB6834', // 2 naranja
-    '#3B6FD8', // 3 azul
-    '#EDA100', // 4 ámbar
+    '#3B8FF0', // 1 azul (marca)
+    '#F7D93A', // 2 amarillo
+    '#1E3A6E', // 3 navy
+    '#EB6834', // 4 naranja
     '#D9659A', // 5 rosa
     '#7C5FD6', // 6 violeta
-    '#8A9A2A', // 7 oliva
-    '#5AA9D6', // 8 celeste
+    '#0F8F84', // 7 teal
+    '#9CCBF5', // 8 celeste
 ]
 
 // Color para la porción "Otros" cuando hay más de 8 categorías
-export const COLOR_OTROS = '#A3B1AF'
+export const COLOR_OTROS = '#A9B8CC'
 
 export const STATUS = {
     good:     { fill: '#0CA30C', ink: '#0B7A2E', soft: '#E8F6E8' },
     warning:  { fill: '#FAB219', ink: '#8A5A00', soft: '#FEF4DC' },
     serious:  { fill: '#EC835A', ink: '#A8461C', soft: '#FDEDE5' },
     critical: { fill: '#D03B3B', ink: '#B42828', soft: '#FBEAEA' },
-    neutral:  { fill: '#7E93AE', ink: '#4B5F5C', soft: '#EEF2F6' },
+    neutral:  { fill: '#7E93AE', ink: '#34456A', soft: '#EEF2F6' },
 }
 
 export const INK = {
-    text:  '#0F1F1D',
-    muted: '#4B5F5C',
-    light: '#637572',
-    grid:  '#E6EEEC',
+    text:  '#0E2240',
+    muted: '#34456A',
+    light: '#475A7D',
+    grid:  '#E6EEF8',
     surface: '#FFFFFF',
 }
 
@@ -49,8 +49,8 @@ export const INK = {
 export const AXIS_TICK = { fontSize: 12, fill: INK.light, fontFamily: 'Figtree, sans-serif' }
 export const AXIS_TICK_LABEL = { ...AXIS_TICK, fill: INK.muted, fontWeight: 500 }
 export const GRID_PROPS = { stroke: INK.grid, strokeDasharray: '4 4' }
-export const CURSOR_BAR = { fill: 'rgba(15,143,132,0.06)' }
-export const CURSOR_LINE = { stroke: '#9FB3B0', strokeWidth: 1, strokeDasharray: '4 4' }
+export const CURSOR_BAR = { fill: 'rgba(59,143,240,0.08)' }
+export const CURSOR_LINE = { stroke: '#9FB3CC', strokeWidth: 1, strokeDasharray: '4 4' }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
