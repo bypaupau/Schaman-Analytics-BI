@@ -37,6 +37,7 @@ import { MenuLateral }   from './components/MenuLateral.jsx'
 import { PaginaFallos }  from './pages/PaginaFallos.jsx'
 import { PaginaDatos }   from './pages/PaginaDatos.jsx'
 import { PaginaSesiones } from './pages/PaginaSesiones.jsx'
+import { PaginaMapa }     from './pages/PaginaMapa.jsx'
 
 function App() {
     // ── Navegación: qué página está activa ──────────────────────────────────
@@ -96,6 +97,15 @@ function App() {
                         filtros={filtrosParaMenu}
                         onCambioFiltro={handleFiltroChange}
                         data={dataSesiones}
+                        periodo={periodo}
+                    />
+                )}
+
+                {pagina === 'mapa' && (
+                    <PaginaMapa
+                        filtros={filtrosParaMenu}
+                        valoresFiltro={filtros}
+                        onCambioFiltro={handleFiltroChange}
                         periodo={periodo}
                     />
                 )}

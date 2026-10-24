@@ -15,7 +15,7 @@
 // Contraído: solo se ve el símbolo del logo y los íconos (con tooltip).
 // ══════════════════════════════════════════════════════════════════════════════
 
-import { LayoutDashboard, TriangleAlert, Database, List, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { LayoutDashboard, TriangleAlert, Database, List, Map as MapIcon, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import logo from '../assets/logo.png'
 
 // Cada ítem tiene:
@@ -25,6 +25,7 @@ import logo from '../assets/logo.png'
 const NAV_ITEMS = [
     { id: 'overview', icon: LayoutDashboard, label: 'Panel general'   },
     { id: 'sesiones', icon: List,              label: 'Sesiones' },
+    { id: 'mapa',     icon: MapIcon,           label: 'Mapa' },
     { id: 'fallos',   icon: TriangleAlert,   label: 'Análisis de fallos' },
     // Aquí irán las páginas futuras (agentes, clientes, etc.)
     // { id: 'agentes',  icon: Users,         label: 'Rendimiento'     },
