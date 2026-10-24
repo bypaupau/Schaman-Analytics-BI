@@ -18,12 +18,6 @@ const dimensionesMock = [
     { nombre: 'Resolución por IA', valor: 35, icono: <Bot      size={16} /> },
 ]
 
-const UMBRALES = [
-    { status: 'good',     label: 'Óptimo ≥ 80%'     },
-    { status: 'warning',  label: 'En progreso 50–79%' },
-    { status: 'critical', label: 'Crítico < 50%'    },
-]
-
 // Nivel de texto según puntuación
 function nivel(score, max) {
     const pct = score / max
@@ -97,14 +91,6 @@ export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMoc
                     <div>
                         <h3 className="card-title">Dimensiones del score</h3>
                         <p className="card-subtitle">Rendimiento del período seleccionado</p>
-                    </div>
-                    <div className="legend" aria-label="Umbrales">
-                        {UMBRALES.map(u => (
-                            <span key={u.status} className="legend-item">
-                                <span className="dot" style={{ background: STATUS[u.status].fill }} />
-                                {u.label}
-                            </span>
-                        ))}
                     </div>
                 </div>
 
