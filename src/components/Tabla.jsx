@@ -3,10 +3,10 @@
 //   - Canal: el mismo color de identidad que en el donut (colorCanal)
 //   - NPS y Estado: colores de estado + texto, nunca color solo
 
-import { Bot, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Bot, ChevronLeft, ChevronRight, Globe, Headset, Mail, MessageCircle, MessagesSquare, Smartphone } from 'lucide-react'
+import { Fragment, useEffect, useState } from 'react'
 import { Card } from './Card.jsx'
-import { STATUS, colorCanal } from '../lib/chartTheme'
+import { STATUS, colorCanal, normalizar } from '../lib/chartTheme'
 
 const dataMock = [
     { id: 'Ses-8841', cliente: 'Ana Torres',   canal: 'Chat',    zona: 'Centro', duracion: '187s', resueltoPrimerContacto: 'No', resueltaIA: 'Sí', nps: 9,  estado: 'Exitosa'   },
@@ -23,10 +23,34 @@ function npsInfo(n) {
     return              { ...STATUS.critical, label: 'Detractor' }
 }
 
+// Ícono de cada canal (se muestra junto al punto de color y el nombre)
+const ICONOS_CANAL = {
+    'app movil':   Smartphone,
+    'call center': Headset,
+    'web chat':    MessagesSquare,
+    'email':       Mail,
+    'whatsapp':    MessageCircle,
+}
+
+function iconoCanal(canal) {
+    return ICONOS_CANAL[normalizar(canal)] ?? Globe
+}
+
 function estadoInfo(estado) {
-    if (estado === 'Exitosa')   return STATUS.good
-    if (estado === 'Pendiente') return STATUS.warning
-    return STATUS.neutral
+    switch (normalizar(estado)) {
+        case 'exitosa':    return STATUS.good
+        case 'escalado':   return STATUS.warning
+        case 'pendiente':  return STATUS.warning
+        case 'abandonado': return STATUS.critical
+        default:           return STATUS.neutral
+    }
+}
+
+// Los estados llegan en mayúsculas (ESCALADO) o capitalizados (Exitosa):
+// los mostramos siempre como "Escalado" para tener un solo formato.
+function formatoEstado(estado) {
+    const t = String(estado ?? '').toLowerCase()
+    return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
 const COLS = [
@@ -35,7 +59,7 @@ const COLS = [
     { label: 'Canal' },
     { label: 'Zona' },
     { label: 'Duración', align: 'right' },
-    { label: '¿Resuelto al 1er contacto?' },
+    { label: '¿Resuelto al\n1er contacto?' },
     { label: 'Resuelta IA' },
     { label: 'NPS' },
     { label: 'Estado' },
@@ -65,7 +89,7 @@ export function Tabla({ data = dataMock }) {
                         <tr>
                             {COLS.map(col => (
                                 <th key={col.label} scope="col" style={{ textAlign: col.align ?? 'left' }}>
-                                    {col.label}
+                                    {col.label.split('\n').map((linea, i) => i === 0 ? linea : <Fragment key={i}><br />{linea}</Fragment>)}
                                 </th>
                             ))}
                         </tr>
@@ -79,6 +103,7 @@ export function Tabla({ data = dataMock }) {
                         {filas.map((s, i) => {
                             const nps    = npsInfo(s.nps)
                             const estado = estadoInfo(s.estado)
+                            const IconoCanal = iconoCanal(s.canal)
                             return (
                                 <tr key={i}>
                                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-light)' }}>
@@ -89,19 +114,19 @@ export function Tabla({ data = dataMock }) {
                                     </td>
                                     {/* Canal: punto con el mismo color que en el donut */}
                                     <td>
-                                        <span className="chip" style={{ background: 'var(--card-subtle)', color: 'var(--text-muted)', boxShadow: 'inset 0 0 0 1px var(--border)' }}>
-                                            <span className="dot" style={{ background: colorCanal(s.canal) }} />
+                                        <span className="chip" style={{ background: `color-mix(in srgb, ${colorCanal(s.canal)} 14%, white)`, color: 'var(--text-muted)', boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${colorCanal(s.canal)} 28%, white)` }}>
+                                            <IconoCanal size={14} strokeWidth={2.2} aria-hidden="true" />
                                             {s.canal}
                                         </span>
                                     </td>
                                     <td>{s.zona}</td>
                                     <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13 }}>{s.duracion}</td>
-                                    <td style={{ color: s.resueltoPrimerContacto === 'Sí' ? 'var(--brand-ink)' : s.resueltoPrimerContacto === 'No' ? 'var(--text)' : 'var(--text-light)', fontWeight: s.resueltoPrimerContacto === 'Sí' ? 600 : 400 }}>
+                                    <td style={{ color: s.resueltoPrimerContacto === 'Sí' ? 'var(--status-good-ink)' : s.resueltoPrimerContacto === 'No' ? 'var(--text)' : 'var(--text-light)', fontWeight: s.resueltoPrimerContacto === 'Sí' ? 600 : 400 }}>
                                         {s.resueltoPrimerContacto}
                                     </td>
                                     <td>
                                         {s.resueltaIA === 'Sí'
-                                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--brand-ink)', fontWeight: 600 }}><Bot size={16} aria-hidden="true" />Sí</span>
+                                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--status-good-ink)', fontWeight: 600 }}><Bot size={16} aria-hidden="true" />Sí</span>
                                             : <span style={{ color: 'var(--text-light)' }}>No</span>}
                                     </td>
                                     {/* NPS: número + categoría (el color refuerza, no reemplaza) */}
@@ -115,7 +140,7 @@ export function Tabla({ data = dataMock }) {
                                     <td>
                                         <span className="chip" style={{ background: estado.soft, color: estado.ink }}>
                                             <span className="dot" style={{ background: estado.fill }} />
-                                            {s.estado}
+                                            {formatoEstado(s.estado)}
                                         </span>
                                     </td>
                                 </tr>
