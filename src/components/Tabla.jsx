@@ -3,10 +3,10 @@
 //   - Canal: el mismo color de identidad que en el donut (colorCanal)
 //   - NPS y Estado: colores de estado + texto, nunca color solo
 
-import { Bot, ChevronLeft, ChevronRight, Globe, Headset, Mail, MessageCircle, MessagesSquare, Smartphone } from 'lucide-react'
+import { Bot, ChevronLeft, ChevronRight, Globe, Headset, Mail, MessageCircle, MessagesSquare, Search, Smartphone } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Card } from './Card.jsx'
-import { STATUS, colorCanal, normalizar } from '../lib/chartTheme'
+import { STATUS, colorCanal, formatoNumero, normalizar } from '../lib/chartTheme'
 
 const dataMock = [
     { id: 'Ses-8841', cliente: 'Ana Torres',   canal: 'Chat',    zona: 'Centro', duracion: '187s', resueltoPrimerContacto: 'No', resueltaIA: 'Sí', nps: 9,  estado: 'Exitosa'   },
@@ -53,22 +53,74 @@ function formatoEstado(estado) {
     return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
+// `ayuda` es el texto del tooltip que aparece al pasar el cursor (o enfocar) el encabezado.
+// Cada salto de línea (\n) se muestra como un párrafo aparte. Cuando la columna alimenta un
+// KPI o gráfico del panel general, el texto lo dice para que se entienda para qué sirve.
 const COLS = [
-    { label: 'ID sesión' },
-    { label: 'Cliente' },
-    { label: 'Canal' },
-    { label: 'Zona' },
-    { label: 'Duración', align: 'right' },
-    { label: '¿Resuelto al\n1er contacto?' },
-    { label: 'Resuelta IA' },
-    { label: 'NPS' },
-    { label: 'Estado' },
+    {
+        label: 'ID sesión',
+        ayuda: 'Número de la sesión dentro de esta lista, de la más reciente a la más antigua. Sirve para ubicar una sesión en la tabla.',
+    },
+    {
+        label: 'Cliente',
+        ayuda: 'Persona que contactó con el servicio de atención en esta sesión.',
+    },
+    {
+        label: 'Canal',
+        ayuda: 'Medio por el que el cliente inició la sesión: app móvil, call center, web chat, email o WhatsApp.\nEs lo que se mide en el gráfico "Distribución por canal" del dashboard.',
+    },
+    {
+        label: 'Zona',
+        ayuda: 'Ciudad y zona donde vive el cliente (por ejemplo, Madrid Norte).\nSe usa en el gráfico "Tasa de éxito por zona" del dashboard y en la página Mapa.',
+    },
+    {
+        label: 'Duración',
+        align: 'right',
+        ayuda: 'Cuánto duró la sesión, en segundos.\nEl promedio de todas las sesiones es el TMO (tiempo medio de operación) del dashboard: cuanto más bajo, más rápido se atiende al cliente.',
+    },
+    {
+        label: '¿Resuelto al\n1er contacto?',
+        ayuda: 'Sí: el problema quedó resuelto en la primera interacción, sin que el cliente tuviera que volver a contactar.\nNo: el cliente tuvo que contactar otra vez.\nSin dato: no se registró.\nEl porcentaje de «Sí» es el FCR (resolución al primer contacto) del dashboard: muestra qué tan bien se diagnostica el problema desde el inicio.',
+    },
+    {
+        label: 'Resuelta IA',
+        ayuda: 'Sí: la IA resolvió la sesión por completo, sin intervención de un agente humano.\nNo: participó un agente.\nEl porcentaje de «Sí» es la "Resolución por IA" del dashboard: muestra cuántos contactos se resuelven de forma automática, lo que reduce la carga y el costo de los agentes.',
+    },
+    {
+        label: 'NPS',
+        ayuda: 'Nota de satisfacción que el cliente da al terminar la sesión, de 0 a 10.\nPromotor (9–10): cliente muy satisfecho, que recomendaría el servicio.\nPasivo (7–8): satisfecho, pero sin entusiasmo; es poco probable que lo recomiende.\nDetractor (0–6): insatisfecho; puede hablar mal del servicio.\nEl T-NPS del dashboard es el % de promotores menos el % de detractores (va de −100 a +100).',
+    },
+    {
+        label: 'Estado',
+        ayuda: 'Cómo terminó la sesión.\nExitosa: el problema se resolvió.\nEscalado: se derivó a otro nivel de atención, como un supervisor o un técnico.\nPendiente: quedó a la espera de una respuesta del cliente.\nAbandonado: el cliente dejó la sesión sin resolverse.\nEl % de sesiones exitosas es la "Tasa de éxito" del dashboard.',
+    },
 ]
+
+// Convierte el texto de ayuda en párrafos; lo que va antes de ":" (el subtítulo) sale en negrita.
+// Solo cuenta como subtítulo un texto corto sin puntos, para no poner en negrita frases largas.
+function Ayuda({ texto }) {
+    return texto.split('\n').map((linea, i) => {
+        const m = linea.match(/^([^:.]{1,28}:)\s*(.*)$/)
+        return (
+            <span key={i} className="col-tip-linea">
+                {m ? <><strong>{m[1]}</strong> {m[2]}</> : linea}
+            </span>
+        )
+    })
+}
 
 const FILAS_POR_PAGINA = 10
 
-export function Tabla({ data = dataMock }) {
+// Props:
+//   data             → filas a mostrar (la tabla las pagina de 10 en 10)
+//   busqueda         → texto del buscador (controlado por la página)
+//   onBusquedaChange → si se pasa, se muestra el buscador; la búsqueda la hace la base de datos
+//   total            → coincidencias totales en la base (si es mayor que data.length se avisa)
+//   cargando         → true mientras llega la respuesta
+export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total, cargando = false }) {
     const [pagina, setPagina] = useState(1)
+    const consulta = busqueda.trim()
+
     const totalPaginas = Math.max(1, Math.ceil(data.length / FILAS_POR_PAGINA))
     const paginaSegura = Math.min(pagina, totalPaginas)
     const inicio = (paginaSegura - 1) * FILAS_POR_PAGINA
@@ -82,14 +134,31 @@ export function Tabla({ data = dataMock }) {
             titulo="Sesiones recientes"
             subtitulo="Últimas sesiones registradas con los filtros aplicados"
             bodyStyle={{ padding: '12px 0 0' }}
+            accion={onBusquedaChange && (
+                <label className="buscador">
+                    <Search size={16} aria-hidden="true" />
+                    <input
+                        type="search"
+                        value={busqueda}
+                        onChange={e => onBusquedaChange(e.target.value)}
+                        placeholder="Buscar por ID o cliente"
+                        aria-label="Buscar sesión por ID o nombre del cliente"
+                        autoComplete="off"
+                    />
+                </label>
+            )}
         >
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto', minHeight: 200 }}>
                 <table className="data-table">
                     <thead>
                         <tr>
-                            {COLS.map(col => (
+                            {COLS.map((col, i) => (
                                 <th key={col.label} scope="col" style={{ textAlign: col.align ?? 'left' }}>
-                                    {col.label.split('\n').map((linea, i) => i === 0 ? linea : <Fragment key={i}><br />{linea}</Fragment>)}
+                                    {/* Las últimas columnas anclan el tooltip a la derecha para que no se salga de la tabla */}
+                                    <span className="col-tip" data-ancla={i >= COLS.length - 3 ? 'derecha' : undefined} tabIndex={0} aria-describedby={`ayuda-col-${i}`}>
+                                        {col.label.split('\n').map((linea, j) => j === 0 ? linea : <Fragment key={j}><br />{linea}</Fragment>)}
+                                        <span role="tooltip" id={`ayuda-col-${i}`} className="col-tip-texto"><Ayuda texto={col.ayuda} /></span>
+                                    </span>
                                 </th>
                             ))}
                         </tr>
@@ -97,7 +166,9 @@ export function Tabla({ data = dataMock }) {
                     <tbody>
                         {data.length === 0 && (
                             <tr>
-                                <td colSpan={COLS.length} className="empty-state" style={{ height: 120 }}>Sin sesiones para este filtro</td>
+                                <td colSpan={COLS.length} className="empty-state" style={{ height: 120 }}>
+                                    {cargando ? 'Cargando sesiones…' : consulta ? `Ninguna sesión coincide con «${consulta}»` : 'Sin sesiones para este filtro'}
+                                </td>
                             </tr>
                         )}
                         {filas.map((s, i) => {
@@ -151,7 +222,10 @@ export function Tabla({ data = dataMock }) {
             </div>
             {data.length > 0 && (
                 <nav className="table-pagination" aria-label="Paginación de sesiones">
-                    <span aria-live="polite">Mostrando {inicio + 1}–{Math.min(inicio + FILAS_POR_PAGINA, data.length)} de {data.length} sesiones</span>
+                    <span aria-live="polite">
+                        Mostrando {inicio + 1}–{Math.min(inicio + FILAS_POR_PAGINA, data.length)} de {data.length} sesiones
+                        {total > data.length && ` (hay ${formatoNumero.format(total)} coincidencias; se muestran las ${data.length} más recientes)`}
+                    </span>
                     <div className="table-pagination-controls">
                         <button type="button" onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaSegura === 1} aria-label="Página anterior">
                             <ChevronLeft size={16} aria-hidden="true" /> Anterior

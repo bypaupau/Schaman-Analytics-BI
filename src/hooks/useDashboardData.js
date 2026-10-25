@@ -59,7 +59,6 @@ export function useDashboardData(filtros) {
     const [dataLineal,   setDataLineal]   = useState(undefined)
     const [dataPie,      setDataPie]      = useState(undefined)
     const [dataBarras,   setDataBarras]   = useState(undefined)
-    const [dataSesiones, setDataSesiones] = useState(undefined)
 
     // ── Re-fetch cada vez que cambia cualquier filtro ────────────────────────
     useEffect(() => {
@@ -74,7 +73,6 @@ export function useDashboardData(filtros) {
                 rFcr, rTmo, rNps, rExito, rDefl,   // KPI Cards
                 rScore,                              // Score Global
                 rLineal, rPie, rBarras,             // Gráficos
-                rSesiones,                          // Tabla inferior
             ] = await Promise.all([
                 supabase.rpc('get_kpi_fcr',                  { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
                 supabase.rpc('get_kpi_tmo',                  { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
@@ -83,11 +81,10 @@ export function useDashboardData(filtros) {
                 supabase.rpc('get_kpi_deflection',           { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
                 supabase.rpc('get_score_global',             { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
                 supabase.rpc('get_chart_fcr_tmo_mensual',    { p_anio: anio,             p_canal: canal, p_region: region, p_subzona: subzona }), supabase.rpc('get_chart_distribucion_canal', { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),                supabase.rpc('get_chart_exito_zona',         { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_sesiones_recientes',       { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona, p_limit: 20 }),
             ])
 
             // Imprime en consola cualquier error de RPC para facilitar el debug
-            ;[rFcr, rTmo, rNps, rExito, rDefl, rScore, rLineal, rPie, rBarras, rSesiones]
+            ;[rFcr, rTmo, rNps, rExito, rDefl, rScore, rLineal, rPie, rBarras]
                 .forEach(r => { if (r.error) console.error('❌ RPC error:', r.error.message) })
 
             // ── KPI Cards: tomamos la primera (y única) fila de cada respuesta ──
@@ -183,14 +180,10 @@ export function useDashboardData(filtros) {
             // Los demás se quedan igual
             if (!rPie.error)      setDataPie(rPie.data           ?? [])
             if (!rBarras.error)   setDataBarras(rBarras.data     ?? [])
-            // El RPC conserva el nombre heredado `tercerContacto`; en la UI exponemos el significado correcto.
-            if (!rSesiones.error) {
-                setDataSesiones((rSesiones.data ?? []).map(s => ({ ...s, resueltoPrimerContacto: s.tercerContacto })))
-            }
         }
 
         fetchTodo()
     }, [filtros])  // dependencia: cualquier cambio en filtros dispara el fetch
 
-    return { kpisData, scoreData, dataLineal, dataPie, dataBarras, dataSesiones }
+    return { kpisData, scoreData, dataLineal, dataPie, dataBarras }
 }

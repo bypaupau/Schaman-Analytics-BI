@@ -308,6 +308,36 @@ select {
     text-overflow: ellipsis;
 }
 
+/* ── Buscador de la tabla de sesiones (mismo aspecto que los filtros) ── */
+.buscador {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    width: min(280px, 100%);
+    padding: 0 14px 0 16px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    color: var(--text-light);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.buscador:hover { border-color: var(--border-strong); }
+.buscador:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.buscador svg { flex: 0 0 auto; }
+.buscador input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    outline: none;
+}
+.buscador input::placeholder { color: var(--text-light); }
+
 /* ── KPI cards ── */
 .kpi-card {
     padding: 20px 22px;
@@ -340,6 +370,38 @@ select {
     vertical-align: middle;
     line-height: 1.35;
 }
+/* Tooltip de los encabezados: aparece al pasar el cursor o con el foco del teclado */
+.col-tip { position: relative; z-index: 1; cursor: help; outline: none; }
+.col-tip:hover, .col-tip:focus-visible { z-index: 30; }
+.col-tip-texto {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: max-content;
+    max-width: 340px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--brand-soft);
+    color: var(--text);
+    box-shadow: inset 0 0 0 1px var(--border-strong), 0 12px 28px -12px rgba(14,34,64,0.25);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    white-space: normal;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.12s ease;
+}
+.col-tip-linea { display: block; }
+.col-tip-linea + .col-tip-linea { margin-top: 5px; }
+.col-tip-texto strong { font-weight: 700; }
+.col-tip[data-ancla="derecha"] .col-tip-texto { left: auto; right: 0; }
+.col-tip:hover .col-tip-texto, .col-tip:focus-visible .col-tip-texto { opacity: 1; visibility: visible; }
+
 .data-table td {
     padding: 14px 20px;
     border-bottom: 1px solid var(--border);

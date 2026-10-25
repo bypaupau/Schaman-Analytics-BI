@@ -49,7 +49,7 @@ function App() {
     // Los hooks se ejecutan siempre (las reglas de hooks en React no permiten
     // llamarlos condicionalmente), pero solo usamos sus datos en el Overview.
     const { filtros, handleFiltroChange, filtrosParaMenu } = useFiltros()
-    const { kpisData, scoreData, dataLineal, dataPie, dataBarras, dataSesiones } = useDashboardData(filtros)
+    const { kpisData, scoreData, dataLineal, dataPie, dataBarras } = useDashboardData(filtros)
 
     const periodo = filtros.mes && filtros.mes !== 'Todos' ? `${filtros.mes} ${filtros.anio}` : `Año ${filtros.anio}`
 
@@ -95,8 +95,8 @@ function App() {
                 {pagina === 'sesiones' && (
                     <PaginaSesiones
                         filtros={filtrosParaMenu}
+                        valoresFiltro={filtros}
                         onCambioFiltro={handleFiltroChange}
-                        data={dataSesiones}
                         periodo={periodo}
                     />
                 )}
