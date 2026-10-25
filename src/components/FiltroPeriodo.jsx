@@ -15,7 +15,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useRef, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
     MESES, DIAS_SEMANA, aIso, partes, diasEnMes, rangoDeAnio, rangoDeMes,
     formatoCorto, describirPeriodo, tipoDeRango,
@@ -120,7 +120,7 @@ export function FiltroPeriodo({ valor, limites, onCambio }) {
             >
                 <span style={{ fontSize: 14, color: 'var(--text-light)', fontWeight: 500 }}>Período</span>
                 <span style={{ fontSize: 14, color: 'var(--text)', fontWeight: 700 }}>{describirPeriodo(valor.desde, valor.hasta)}</span>
-                <CalendarDays size={16} aria-hidden="true" style={{ color: 'var(--text-light)' }} />
+                <ChevronDown size={16} aria-hidden="true" style={{ color: 'var(--text-light)', marginLeft: 4 }} />
             </button>
 
             {abierto && (
@@ -167,8 +167,8 @@ export function FiltroPeriodo({ valor, limites, onCambio }) {
                         </div>
 
                         <div className="cal-grid" role="grid" aria-label={`${MESES[vista.mes - 1]} ${vista.anio}`}>
-                            {DIAS_SEMANA.map((d, i) => (
-                                <span key={d} className="cal-dia-semana" data-finde={i >= 5 || undefined}>{d}</span>
+                            {DIAS_SEMANA.map(d => (
+                                <span key={d} className="cal-dia-semana">{d}</span>
                             ))}
                             {celdas.map((dia, i) => {
                                 if (dia === null) return <span key={`v${i}`} />

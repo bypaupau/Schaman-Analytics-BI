@@ -791,18 +791,20 @@ select {
     top: calc(100% + 10px);
     left: 0;
     z-index: 60;
-    width: 340px;
+    width: 320px;
     max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 18px 18px 14px;
+    gap: 10px;
+    padding: 14px 16px 10px;
     border-radius: var(--radius);
     background: var(--card);
     box-shadow: var(--shadow-hover), inset 0 0 0 1px var(--border);
 }
 .periodo-pop-cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.periodo-pop-cabecera h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+.periodo-pop-cabecera h3 { font-size: 16px; font-weight: 700; color: var(--text); }
 .periodo-reiniciar {
     border: 1px solid var(--border-strong);
     background: transparent;
@@ -823,7 +825,7 @@ select {
     font-size: 14px;
     font-weight: 600;
     color: var(--text);
-    height: 38px;
+    height: 34px;
     padding: 0 10px;
     border-radius: 10px;
     border: 1px solid var(--border);
@@ -835,9 +837,10 @@ select {
 .periodo-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .periodo-campos div {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 8px 12px;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 10px;
     border-radius: 10px;
     background: var(--card-subtle);
     box-shadow: inset 0 0 0 1px var(--border);
@@ -845,7 +848,7 @@ select {
 .periodo-campos span { font-size: 12px; font-weight: 600; color: var(--text-light); }
 .periodo-campos strong { font-size: 14px; color: var(--text); }
 
-.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .cal-nav strong { font-size: 15px; color: var(--text); }
 .cal-nav button {
     display: grid;
@@ -861,14 +864,13 @@ select {
 .cal-nav button:hover:not(:disabled) { background: var(--brand-softer); color: var(--brand-ink); }
 .cal-nav button:disabled { opacity: 0.3; cursor: default; }
 
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 2px; }
-.cal-dia-semana { text-align: center; padding: 4px 0 6px; font-size: 12px; font-weight: 600; color: var(--text-light); }
-.cal-dia-semana[data-finde] { color: var(--status-serious-ink); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 2px; align-content: start; min-height: 220px; }  /* alto fijo: el panel no salta entre meses de 5 y 6 semanas */
+.cal-dia-semana { text-align: center; padding: 2px 0 4px; font-size: 12px; font-weight: 600; color: var(--text-light); }
 .cal-celda {
     position: relative;
     display: grid;
     place-items: center;
-    height: 34px;
+    height: 30px;
     padding: 0;
     border: 0;
     background: transparent;
@@ -878,17 +880,17 @@ select {
     color: var(--text);
     cursor: pointer;
 }
-.cal-celda span { position: relative; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font-variant-numeric: tabular-nums; }
+.cal-celda span { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-variant-numeric: tabular-nums; }
 .cal-celda:hover:not(:disabled):not([data-extremo]) span { background: var(--brand-soft); }
 .cal-celda:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 8px; }
 .cal-celda:disabled { color: var(--text-light); opacity: 0.35; cursor: default; }
 .cal-celda[data-rango], .cal-celda[data-inicio], .cal-celda[data-fin] { background: var(--brand-softer); }
-.cal-celda[data-inicio] { border-radius: 17px 0 0 17px; }
-.cal-celda[data-fin] { border-radius: 0 17px 17px 0; }
+.cal-celda[data-inicio] { border-radius: 15px 0 0 15px; }
+.cal-celda[data-fin] { border-radius: 0 15px 15px 0; }
 .cal-celda[data-extremo] span { background: var(--brand); color: #FFFFFF; font-weight: 700; }
-.cal-ayuda { margin: 8px 0 0; font-size: 12px; color: var(--text-light); text-align: center; }
+.cal-ayuda { margin: 4px 0 0; font-size: 12px; color: var(--text-light); text-align: center; }
 
-.periodo-pie { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); }
+.periodo-pie { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; border-top: 1px solid var(--border); }
 .periodo-pie button { border: 0; background: transparent; padding: 6px 4px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
 .periodo-cerrar { color: var(--text-light); }
 .periodo-cerrar:hover { color: var(--text); }
