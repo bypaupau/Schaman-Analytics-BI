@@ -17,7 +17,7 @@ export function useFallosData(filtros) {
     const [error,            setError]            = useState(null)
 
     useEffect(() => {
-        if (!filtros?.anio) return
+        if (!filtros?.desde) return
         let cancelled = false
 
         async function fetchFallos() {
@@ -28,8 +28,8 @@ export function useFallosData(filtros) {
             setError(null)
 
             const filtrosRpc = {
-                p_anio: filtros.anio,
-                p_mes: filtros.mes,
+                p_desde: filtros.desde,
+                p_hasta: filtros.hasta,
                 p_canal: filtros.canal,
                 p_region: filtros.region,
                 p_subzona: filtros.subzona,
@@ -72,7 +72,7 @@ export function useFallosData(filtros) {
 
         fetchFallos()
         return () => { cancelled = true }
-    }, [filtros?.anio, filtros?.mes, filtros?.canal, filtros?.region, filtros?.subzona])
+    }, [filtros?.desde, filtros?.hasta, filtros?.canal, filtros?.region, filtros?.subzona])
 
     return { topProblemas, porCategoria, porPrioridad, topDispositivos, error }
 }

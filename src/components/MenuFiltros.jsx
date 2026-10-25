@@ -9,11 +9,11 @@
 // pantalla anuncia "Año, 2024" en lugar de un select sin nombre.
 
 import { ChevronDown, SlidersHorizontal } from "lucide-react"
+import { FiltroPeriodo } from './FiltroPeriodo.jsx'
 
 // Datos de ejemplo mientras Supabase carga (se reemplazan automáticamente)
 const filtrosMock = [
-    { label: 'Año',   opciones: ['2024', '2025'],                                 valorActual: '2024'    },
-    { label: 'Mes',   opciones: ['Todos', 'Enero', 'Febrero', 'Marzo', 'Octubre'], valorActual: 'Todos'   },
+    { label: 'Período', tipo: 'periodo', valorActual: { desde: '2024-01-01', hasta: '2024-12-31' }, limites: { min: '2024-01-01', max: '2025-12-31' } },
     { label: 'Canal', opciones: ['Todos', 'Llamadas', 'Chat', 'Email', 'App'],     valorActual: 'Todos'   },
     { label: 'Zona',  opciones: ['Global', 'Norte', 'Centro', 'Sur'],              valorActual: 'Global'  },
 ]
@@ -29,7 +29,14 @@ export function MenuFiltros({ filtros = filtrosMock, onCambio }) {
                 Filtrar por
             </span>
 
-            {lista.map((filtro) => (
+            {lista.map((filtro) => filtro.tipo === 'periodo' ? (
+                <FiltroPeriodo
+                    key={filtro.label}
+                    valor={filtro.valorActual}
+                    limites={filtro.limites}
+                    onCambio={rango => onCambio?.(filtro.label, rango)}
+                />
+            ) : (
                 <label key={filtro.label} className="filter-pill">
                     <span style={{ fontSize: 14, color: 'var(--text-light)', fontWeight: 500 }}>
                         {filtro.label}

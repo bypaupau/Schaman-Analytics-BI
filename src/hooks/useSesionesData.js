@@ -3,7 +3,7 @@
 // Trae de Supabase las sesiones de la tabla "Sesiones recientes", con búsqueda.
 //
 // La búsqueda se hace en la base de datos (parámetro p_busqueda de
-// get_sesiones_recientes): busca por ID de sesión o nombre del cliente sobre
+// get_sesiones_recientes): busca por ID de sesión, nombre del cliente o fecha sobre
 // TODAS las sesiones del filtro, no solo sobre las que ya están en pantalla.
 //
 // Mientras llega una respuesta nueva se conservan las filas anteriores, para
@@ -30,7 +30,7 @@ export function useSesionesData(filtros, busqueda) {
     }, [busqueda])
 
     useEffect(() => {
-        if (!filtros?.anio) return
+        if (!filtros?.desde) return
         let cancelled = false
 
         async function fetchSesiones() {
@@ -38,8 +38,8 @@ export function useSesionesData(filtros, busqueda) {
             setError(null)
 
             const { data: filas, error } = await supabase.rpc('get_sesiones_recientes', {
-                p_anio:     filtros.anio,
-                p_mes:      filtros.mes,
+                p_desde:    filtros.desde,
+                p_hasta:    filtros.hasta,
                 p_canal:    filtros.canal,
                 p_region:   filtros.region,
                 p_subzona:  filtros.subzona,
@@ -65,7 +65,7 @@ export function useSesionesData(filtros, busqueda) {
 
         fetchSesiones()
         return () => { cancelled = true }
-    }, [filtros?.anio, filtros?.mes, filtros?.canal, filtros?.region, filtros?.subzona, consulta])
+    }, [filtros?.desde, filtros?.hasta, filtros?.canal, filtros?.region, filtros?.subzona, consulta])
 
     return { data, total, cargando, error }
 }

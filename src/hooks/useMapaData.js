@@ -15,7 +15,7 @@ export function useMapaData(filtros) {
     const [error, setError] = useState(null)
 
     useEffect(() => {
-        if (!filtros?.anio) return
+        if (!filtros?.desde) return
         let cancelled = false
 
         async function fetchMapa() {
@@ -23,8 +23,8 @@ export function useMapaData(filtros) {
             setError(null)
 
             const { data: filas, error } = await supabase.rpc('get_mapa_sesiones', {
-                p_anio:    filtros.anio,
-                p_mes:     filtros.mes,
+                p_desde:   filtros.desde,
+                p_hasta:   filtros.hasta,
                 p_canal:   filtros.canal,
                 p_region:  filtros.region,
                 p_subzona: filtros.subzona,
@@ -44,7 +44,7 @@ export function useMapaData(filtros) {
 
         fetchMapa()
         return () => { cancelled = true }
-    }, [filtros?.anio, filtros?.mes, filtros?.canal, filtros?.region, filtros?.subzona])
+    }, [filtros?.desde, filtros?.hasta, filtros?.canal, filtros?.region, filtros?.subzona])
 
     return { data, error }
 }

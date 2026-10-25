@@ -18,6 +18,7 @@ import { Card }             from '../components/Card'
 import { PageHeader }       from '../components/PageHeader'
 import { MenuFiltros }      from '../components/MenuFiltros.jsx'
 import { STATUS, normalizar, formatoNumero } from '../lib/chartTheme'
+import { describirPeriodo } from '../lib/fechas'
 import { AlertOctagon, Activity, CheckCircle2, PieChartIcon } from 'lucide-react'
 
 // ── Prioridad → color de ESTADO (insensible a mayúsculas y tildes) ───────────
@@ -113,7 +114,7 @@ function TablaPrioridad({ data }) {
 // ── Componente principal de la página ────────────────────────────────────────
 export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
     const { topProblemas, porCategoria, porPrioridad, topDispositivos, error } = useFallosData(valoresFiltro)
-    const periodo = valoresFiltro.mes !== 'Todos' ? `${valoresFiltro.mes} ${valoresFiltro.anio}` : `Año ${valoresFiltro.anio}`
+    const periodo = describirPeriodo(valoresFiltro.desde, valoresFiltro.hasta)
 
     const totalSesiones = topProblemas?.reduce((acc, p) => acc + Number(p.total_sesiones), 0) ?? 0
     const topProblema = topProblemas?.[0]

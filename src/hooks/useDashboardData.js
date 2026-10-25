@@ -3,7 +3,7 @@
 // Hook personalizado que orquesta TODOS los datos del dashboard.
 //
 // Qué hace:
-//   - Cuando cambian los filtros (anio, mes, canal, region, subzona),
+//   - Cuando cambian los filtros (desde, hasta, canal, region, subzona),
 //     dispara 10 llamadas RPC a Supabase EN PARALELO con Promise.all
 //   - Transforma las respuestas al formato que necesita cada componente
 //   - Devuelve el estado listo para renderizar
@@ -62,7 +62,7 @@ export function useDashboardData(filtros) {
 
     // ── Re-fetch cada vez que cambia cualquier filtro ────────────────────────
     useEffect(() => {
-        const { anio, mes, canal, region, subzona } = filtros
+        const { desde, hasta, canal, region, subzona } = filtros
 
         async function fetchTodo() {
 
@@ -74,13 +74,13 @@ export function useDashboardData(filtros) {
                 rScore,                              // Score Global
                 rLineal, rPie, rBarras,             // Gráficos
             ] = await Promise.all([
-                supabase.rpc('get_kpi_fcr',                  { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_kpi_tmo',                  { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_kpi_tnps',                 { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_kpi_tasa_exito',           { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_kpi_deflection',           { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_score_global',             { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
-                supabase.rpc('get_chart_fcr_tmo_mensual',    { p_anio: anio,             p_canal: canal, p_region: region, p_subzona: subzona }), supabase.rpc('get_chart_distribucion_canal', { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),                supabase.rpc('get_chart_exito_zona',         { p_anio: anio, p_mes: mes, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_kpi_fcr',                  { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_kpi_tmo',                  { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_kpi_tnps',                 { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_kpi_tasa_exito',           { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_kpi_deflection',           { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_score_global',             { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),
+                supabase.rpc('get_chart_fcr_tmo_mensual',    { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }), supabase.rpc('get_chart_distribucion_canal', { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),                supabase.rpc('get_chart_exito_zona',         { p_desde: desde, p_hasta: hasta, p_canal: canal, p_region: region, p_subzona: subzona }),
             ])
 
             // Imprime en consola cualquier error de RPC para facilitar el debug

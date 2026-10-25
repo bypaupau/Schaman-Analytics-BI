@@ -2,9 +2,9 @@
 import { GraficoLineal } from "./GraficoLineal.jsx"
 import { Card } from "./Card.jsx"
 
-export function KPICardLineal({ titulo, data }) {
+export function KPICardLineal({ titulo, subtitulo = 'Evolución mensual del período seleccionado', data }) {
     return (
-        <Card titulo={titulo} subtitulo="Evolución mensual del año seleccionado">
+        <Card titulo={titulo} subtitulo={subtitulo}>
             <GraficoLineal data={data} />
         </Card>
     )

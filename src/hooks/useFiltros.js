@@ -15,11 +15,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase }            from '../lib/supabase'
+import { rangoDeAnio }         from '../lib/fechas'
 
 // Valores "centinela": el SQL los interpreta como "sin filtro aplicado"
 const FILTROS_INIT = {
-    anio:    2024,
-    mes:     'Todos',
+    ...rangoDeAnio(2024),   // desde / hasta: el período activo (un año, un mes, un rango o un día)
     canal:   'Todos',
     region:  'Global',   // 'Global' = mostrar todas las regiones
     subzona: 'Global',   // 'Global' = mostrar todas las subzonas
@@ -47,7 +47,7 @@ export function useFiltros() {
             // Arrancar con el año más reciente disponible en el DW
             if (row.anios?.length) {
                 const anioMax = Math.max(...row.anios)
-                setFiltros(prev => ({ ...prev, anio: anioMax }))
+                setFiltros(prev => ({ ...prev, ...rangoDeAnio(anioMax) }))
             }
         }
         cargarOpciones()
@@ -55,10 +55,14 @@ export function useFiltros() {
 
     // ── Handler: el usuario cambia un filtro en el menú ─────────────────────
     function handleFiltroChange(label, value) {
+        // El filtro de Período entrega las dos fechas juntas: { desde, hasta }
+        if (label === 'Período') {
+            setFiltros(prev => ({ ...prev, desde: value.desde, hasta: value.hasta }))
+            return
+        }
+
         // Mapeamos el label que muestra el <select> a la clave del estado
         const mapa = {
-            Año:    'anio',
-            Mes:    'mes',
             Canal:  'canal',
             Región: 'region',
             Zona:   'subzona',
@@ -70,7 +74,7 @@ export function useFiltros() {
             const nuevo = {
                 ...prev,
                 // El año es numérico, el resto son strings
-                [clave]: clave === 'anio' ? parseInt(value, 10) : value,
+                [clave]: value,
             }
             // Cuando el usuario cambia la Región, reseteamos la Zona a 'Global'.
             // Si no lo hacemos, podría quedar seleccionada una subzona que no existe
@@ -110,14 +114,12 @@ export function useFiltros() {
     const filtrosParaMenu = opciones
         ? [
             {
-                label:       'Año',
-                opciones:    opciones.anios.map(String),   // convertimos números a strings para el select
-                valorActual: String(filtros.anio),
-            },
-            {
-                label:       'Mes',
-                opciones:    ['Todos', ...opciones.meses],
-                valorActual: filtros.mes,
+                // Un solo filtro de fecha: año, mes, rango o día. Los límites son
+                // el primer y último año que existen en el data warehouse.
+                label:       'Período',
+                tipo:        'periodo',
+                valorActual: { desde: filtros.desde, hasta: filtros.hasta },
+                limites:     { min: `${Math.min(...opciones.anios)}-01-01`, max: `${Math.max(...opciones.anios)}-12-31` },
             },
             {
                 label:       'Canal',

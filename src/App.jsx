@@ -20,6 +20,7 @@
 import { useState }         from 'react'
 import { useFiltros }        from './hooks/useFiltros'
 import { useDashboardData }  from './hooks/useDashboardData'
+import { describirPeriodo, diasDelRango } from './lib/fechas'
 
 // Componentes del Overview (página principal)
 import { KPICard }       from './components/KPICard.jsx'
@@ -51,7 +52,9 @@ function App() {
     const { filtros, handleFiltroChange, filtrosParaMenu } = useFiltros()
     const { kpisData, scoreData, dataLineal, dataPie, dataBarras } = useDashboardData(filtros)
 
-    const periodo = filtros.mes && filtros.mes !== 'Todos' ? `${filtros.mes} ${filtros.anio}` : `Año ${filtros.anio}`
+    const periodo = describirPeriodo(filtros.desde, filtros.hasta)
+    // Períodos cortos (hasta ~2 meses) se grafican por día; los más largos, por mes
+    const porDia  = diasDelRango(filtros.desde, filtros.hasta) <= 62
 
     return (
         <div className="flex min-h-screen w-full">
@@ -85,7 +88,11 @@ function App() {
                         </div>
 
                         <div className="grid-3">
-                            <KPICardLineal titulo="FCR y TMO por mes"        data={dataLineal}  />
+                            <KPICardLineal
+                                titulo={porDia ? 'FCR y TMO por día' : 'FCR y TMO por mes'}
+                                subtitulo={porDia ? 'Evolución diaria del período seleccionado' : 'Evolución mensual del período seleccionado'}
+                                data={dataLineal}
+                            />
                             <KPICardPie    titulo="Distribución por canal"   data={dataPie}     />
                             <KPICardBarras titulo="Tasa de éxito por zona"   data={dataBarras}  />
                         </div>
