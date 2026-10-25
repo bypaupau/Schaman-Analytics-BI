@@ -59,11 +59,15 @@ function formatoEstado(estado) {
 const COLS = [
     {
         label: 'ID sesión',
-        ayuda: 'Número de la sesión dentro de esta lista, de la más reciente a la más antigua. Sirve para ubicar una sesión en la tabla.',
+        ayuda: 'Identificador único de la sesión en el data warehouse (por ejemplo, SES-0042). Se puede usar en el buscador para encontrar una sesión concreta.',
     },
     {
         label: 'Cliente',
         ayuda: 'Persona que contactó con el servicio de atención en esta sesión.',
+    },
+    {
+        label: 'Fecha',
+        ayuda: 'Día en que se realizó la sesión (día/mes/año). Las sesiones se ordenan de la más reciente a la más antigua.\nSe puede buscar escribiendo la fecha, por ejemplo 23/12/2025 o 2025-12-23.',
     },
     {
         label: 'Canal',
@@ -95,6 +99,12 @@ const COLS = [
         ayuda: 'Cómo terminó la sesión.\nExitosa: el problema se resolvió.\nEscalado: se derivó a otro nivel de atención, como un supervisor o un técnico.\nPendiente: quedó a la espera de una respuesta del cliente.\nAbandonado: el cliente dejó la sesión sin resolverse.\nEl % de sesiones exitosas es la "Tasa de éxito" del dashboard.',
     },
 ]
+
+// '2025-12-23' → '23/12/2025' (sin pasar por Date, para evitar desfases de zona horaria)
+function formatoFecha(iso) {
+    const m = String(iso ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'
+}
 
 // Convierte el texto de ayuda en párrafos; lo que va antes de ":" (el subtítulo) sale en negrita.
 // Solo cuenta como subtítulo un texto corto sin puntos, para no poner en negrita frases largas.
@@ -141,8 +151,8 @@ export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total,
                         type="search"
                         value={busqueda}
                         onChange={e => onBusquedaChange(e.target.value)}
-                        placeholder="Buscar por ID o cliente"
-                        aria-label="Buscar sesión por ID o nombre del cliente"
+                        placeholder="Buscar por ID, cliente o fecha"
+                        aria-label="Buscar sesión por ID, nombre del cliente o fecha"
                         autoComplete="off"
                     />
                 </label>
@@ -183,6 +193,7 @@ export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total,
                                     <td style={{ fontWeight: 600, color: 'var(--text)' }}>
                                         {s.cliente}
                                     </td>
+                                    <td className="tabular">{formatoFecha(s.fecha)}</td>
                                     {/* Canal: punto con el mismo color que en el donut */}
                                     <td>
                                         <span className="chip" style={{ background: `color-mix(in srgb, ${colorCanal(s.canal)} 14%, white)`, color: 'var(--text-muted)', boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${colorCanal(s.canal)} 28%, white)` }}>
