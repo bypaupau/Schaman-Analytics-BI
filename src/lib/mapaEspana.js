@@ -23,9 +23,9 @@ export const CIUDAD_PROVINCIA = {
 
 // Métricas que se pueden pintar en el mapa (el selector de la página)
 export const METRICAS_MAPA = [
-    { id: 'todas',  label: 'Todas',                      campo: 'total', descripcion: 'sesiones' },
-    { id: 'ia',     label: 'Resueltas por IA',           campo: 'ia',    descripcion: 'resueltas por IA' },
-    { id: 'primer', label: 'Resueltas en 1er contacto',  campo: 'fcr',   descripcion: 'resueltas en el primer contacto' },
+    { id: 'todas',  label: 'Todas',                      campo: 'total', descripcion: 'sesiones',                          columna: 'Sesiones'  },
+    { id: 'ia',     label: 'Resueltas por IA',           campo: 'ia',    descripcion: 'resueltas por IA',                  columna: 'Resueltas' },
+    { id: 'primer', label: 'Resueltas en 1er contacto',  campo: 'fcr',   descripcion: 'resueltas en el primer contacto',   columna: 'Resueltas' },
 ]
 
 // 'MÁLAGA' → 'Málaga'
@@ -34,8 +34,13 @@ export function titulo(texto) {
     return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
-// Agrupa las filas de get_mapa_sesiones (una por zona) en una entrada por ciudad
-export function agruparPorCiudad(filas) {
+// Agrupa las filas de get_mapa_sesiones (una por zona) en una entrada por ciudad.
+//   excluidas → Set con los nombres completos de zona que el usuario desmarcó:
+//               no suman en los totales de la ciudad (total / ia / fcr), pero
+//               siguen en `zonas` (con incluida: false) para poder volver a marcarlas.
+//   base      → totales de la ciudad con TODAS sus zonas; sirve para ordenar el
+//               ranking sin que las filas salten al marcar o desmarcar zonas.
+export function agruparPorCiudad(filas, excluidas = new Set()) {
     const ciudades = new Map()
 
     for (const f of filas ?? []) {
@@ -46,17 +51,21 @@ export function agruparPorCiudad(filas) {
             nombre: titulo(ciudad),
             cod: CIUDAD_PROVINCIA[clave],
             total: 0, ia: 0, fcr: 0,
+            base: { total: 0, ia: 0, fcr: 0 },
             zonas: [],
         }
         const fila = {
+            clave: f.zona,
             nombre: titulo(resto.join(' ')) || titulo(ciudad),
             total: Number(f.total_sesiones),
             ia:    Number(f.resueltas_ia),
             fcr:   Number(f.resueltas_primer_contacto),
+            incluida: !excluidas.has(f.zona),
         }
-        c.total += fila.total
-        c.ia    += fila.ia
-        c.fcr   += fila.fcr
+        for (const campo of ['total', 'ia', 'fcr']) {
+            c.base[campo] += fila[campo]
+            if (fila.incluida) c[campo] += fila[campo]
+        }
         c.zonas.push(fila)
         ciudades.set(clave, c)
     }
