@@ -4,15 +4,17 @@
 //   título (qué es) · subtítulo (cómo leerlo) · acción opcional a la derecha · contenido
 // Así el ojo encuentra la información siempre en el mismo lugar.
 
-export function Card({ titulo, subtitulo, accion, children, className = '', bodyStyle }) {
+import { Tip } from './Tip.jsx'
+
+export function Card({ titulo, subtitulo, ayuda, accion, children, className = '', bodyStyle }) {
     return (
         <section className={`card reveal ${className}`}>
             {(titulo || accion) && (
                 <header className="card-header">
-                    <div style={{ minWidth: 0 }}>
+                    <Tip as="div" texto={ayuda} style={{ minWidth: 0 }}>
                         {titulo && <h2 className="card-title">{titulo}</h2>}
                         {subtitulo && <p className="card-subtitle">{subtitulo}</p>}
-                    </div>
+                    </Tip>
                     {accion}
                 </header>
             )}

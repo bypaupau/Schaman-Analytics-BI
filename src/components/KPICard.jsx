@@ -14,6 +14,7 @@
 //   lleva además un ícono para que el color nunca vaya solo.
 
 import { CircleCheck, TriangleAlert, OctagonAlert } from 'lucide-react'
+import { Tip } from './Tip.jsx'
 
 const TONOS = {
     brand:    { icon: 'var(--brand)',            iconBg: 'var(--brand-soft)',            chip: 'var(--brand-ink)',            chipBg: 'var(--brand-softer)',          estado: null          },
@@ -24,6 +25,7 @@ const TONOS = {
 
 export function KPICard({
                             KPINombre,
+                            ayuda,                // texto del tooltip del título
                             kpiLabel,
                             metricaKPI,
                             textoKPI,
@@ -38,7 +40,7 @@ export function KPICard({
     return (
         <article className="card kpi-card reveal">
             {/* Altura mínima fija: así los valores de todas las tarjetas quedan alineados */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minHeight: 56 }}>
+            <Tip as="div" texto={ayuda} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minHeight: 56 }}>
                 {Icono && (
                     <span style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, display: 'grid', placeItems: 'center', background: t.iconBg, color: t.icon }}>
                         <Icono size={22} aria-hidden="true" />
@@ -52,7 +54,7 @@ export function KPICard({
                         {kpiLabel}
                     </p>
                 </div>
-            </div>
+            </Tip>
 
             {/* ── Métrica (ajusta su tamaño si es texto) ── */}
             <p

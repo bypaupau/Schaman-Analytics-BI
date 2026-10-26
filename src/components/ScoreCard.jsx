@@ -9,6 +9,8 @@
 import { PieChart, Pie, Cell } from 'recharts'
 import { Target, Zap, Timer, Smile, Bot } from 'lucide-react'
 import { STATUS, statusPorPorcentaje } from '../lib/chartTheme'
+import { Tip } from './Tip.jsx'
+import { AYUDAS } from '../lib/ayudas'
 
 const dimensionesMock = [
     { nombre: 'Precisión',    valor: 87, icono: <Target   size={16} /> },
@@ -70,7 +72,7 @@ export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMoc
 
                 <div style={{ minWidth: 0 }}>
                     <h2 id="score-titulo" style={{ fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
-                        Score global de calidad
+                        <Tip texto={AYUDAS.score}>Score global de calidad</Tip>
                     </h2>
                     <p className="tabular" style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4, whiteSpace: 'nowrap' }}>
                         <span style={{ fontFamily: 'var(--font-display)', fontSize: 56, fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1 }}>
@@ -88,10 +90,10 @@ export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMoc
             {/* ── 2. Dimensiones ─────────────────────────────────────────── */}
             <div style={{ flex: '999 1 min(420px, 100%)', padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '6px 16px' }}>
-                    <div>
+                    <Tip as="div" texto={AYUDAS.dimensiones}>
                         <h3 className="card-title">Dimensiones del score</h3>
                         <p className="card-subtitle">Rendimiento del período seleccionado</p>
-                    </div>
+                    </Tip>
                 </div>
 
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px 28px' }}>
@@ -100,10 +102,10 @@ export function ScoreCard({ score = 318, max = 500, dimensiones = dimensionesMoc
                         return (
                             <li key={d.nombre}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 500, color: 'var(--text-muted)' }}>
+                                    <Tip texto={d.ayuda} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 500, color: 'var(--text-muted)' }}>
                                         <span aria-hidden="true" style={{ display: 'grid', color: 'var(--text-light)' }}>{d.icono}</span>
                                         {d.nombre}
-                                    </span>
+                                    </Tip>
                                     <span className="tabular" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
                                         {d.valor}%
                                     </span>
