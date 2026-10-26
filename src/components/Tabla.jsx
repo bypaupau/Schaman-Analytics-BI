@@ -3,8 +3,8 @@
 //   - Canal: el mismo color de identidad que en el donut (colorCanal)
 //   - NPS y Estado: colores de estado + texto, nunca color solo
 
-import { Bot, ChevronLeft, ChevronRight, Globe, Headset, Mail, MessageCircle, MessagesSquare, Search, Smartphone } from 'lucide-react'
-import { Fragment, useEffect, useState } from 'react'
+import { ArrowDown, ArrowUp, Bot, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, Globe, Headset, Mail, MessageCircle, MessagesSquare, Search, Smartphone } from 'lucide-react'
+import { Fragment } from 'react'
 import { Card } from './Card.jsx'
 import { STATUS, colorCanal, formatoNumero, normalizar } from '../lib/chartTheme'
 
@@ -53,49 +53,60 @@ function formatoEstado(estado) {
     return t.charAt(0).toUpperCase() + t.slice(1)
 }
 
+// `orden` es la clave con la que se ordena esa columna en la base de datos y `ordenInicial` la dirección
+// del primer clic (fechas, números y Sí/No arrancan de mayor a menor; los textos, de A a Z).
 // `ayuda` es el texto del tooltip que aparece al pasar el cursor (o enfocar) el encabezado.
 // Cada salto de línea (\n) se muestra como un párrafo aparte. Cuando la columna alimenta un
 // KPI o gráfico del panel general, el texto lo dice para que se entienda para qué sirve.
 const COLS = [
     {
         label: 'ID sesión',
+        orden: 'id', ordenInicial: 'desc',
         ayuda: 'Identificador único de la sesión en el data warehouse (por ejemplo, SES-0042). Se puede usar en el buscador para encontrar una sesión concreta.',
     },
     {
         label: 'Cliente',
+        orden: 'cliente', ordenInicial: 'asc',
         ayuda: 'Persona que contactó con el servicio de atención en esta sesión.',
     },
     {
         label: 'Fecha',
+        orden: 'fecha', ordenInicial: 'desc',
         ayuda: 'Día en que se realizó la sesión (día/mes/año). Las sesiones se ordenan de la más reciente a la más antigua.\nSe puede buscar escribiendo la fecha, por ejemplo 23/12/2025 o 2025-12-23.',
     },
     {
         label: 'Canal',
+        orden: 'canal', ordenInicial: 'asc',
         ayuda: 'Medio por el que el cliente inició la sesión: app móvil, call center, web chat, email o WhatsApp.\nEs lo que se mide en el gráfico "Distribución por canal" del dashboard.',
     },
     {
         label: 'Zona',
+        orden: 'zona', ordenInicial: 'asc',
         ayuda: 'Ciudad y zona donde vive el cliente (por ejemplo, Madrid Norte).\nSe usa en el gráfico "Tasa de éxito por zona" del dashboard y en la página Mapa.',
     },
     {
         label: 'Duración',
-        align: 'right',
+        orden: 'duracion', ordenInicial: 'desc', estrecha: true,
         ayuda: 'Cuánto duró la sesión, en segundos.\nEl promedio de todas las sesiones es el TMO (tiempo medio de operación) del dashboard: cuanto más bajo, más rápido se atiende al cliente.',
     },
     {
-        label: '¿Resuelto al\n1er contacto?',
+        label: '¿Resuelto\nal 1er\ncontacto?',
+        orden: 'primer', ordenInicial: 'desc', estrecha: true,
         ayuda: 'Sí: el problema quedó resuelto en la primera interacción, sin que el cliente tuviera que volver a contactar.\nNo: el cliente tuvo que contactar otra vez.\nSin dato: no se registró.\nEl porcentaje de «Sí» es el FCR (resolución al primer contacto) del dashboard: muestra qué tan bien se diagnostica el problema desde el inicio.',
     },
     {
-        label: 'Resuelta IA',
+        label: 'Resuelta\nIA',
+        orden: 'ia', ordenInicial: 'desc', estrecha: true,
         ayuda: 'Sí: la IA resolvió la sesión por completo, sin intervención de un agente humano.\nNo: participó un agente.\nEl porcentaje de «Sí» es la "Resolución por IA" del dashboard: muestra cuántos contactos se resuelven de forma automática, lo que reduce la carga y el costo de los agentes.',
     },
     {
         label: 'NPS',
+        orden: 'nps', ordenInicial: 'desc',
         ayuda: 'Nota de satisfacción que el cliente da al terminar la sesión, de 0 a 10.\nPromotor (9–10): cliente muy satisfecho, que recomendaría el servicio.\nPasivo (7–8): satisfecho, pero sin entusiasmo; es poco probable que lo recomiende.\nDetractor (0–6): insatisfecho; puede hablar mal del servicio.\nEl T-NPS del dashboard es el % de promotores menos el % de detractores (va de −100 a +100).',
     },
     {
         label: 'Estado',
+        orden: 'estado', ordenInicial: 'asc',
         ayuda: 'Cómo terminó la sesión.\nExitosa: el problema se resolvió.\nEscalado: se derivó a otro nivel de atención, como un supervisor o un técnico.\nPendiente: quedó a la espera de una respuesta del cliente.\nAbandonado: el cliente dejó la sesión sin resolverse.\nEl % de sesiones exitosas es la "Tasa de éxito" del dashboard.',
     },
 ]
@@ -119,30 +130,65 @@ function Ayuda({ texto }) {
     })
 }
 
-const FILAS_POR_PAGINA = 10
-
 // Props:
-//   data             → filas a mostrar (la tabla las pagina de 10 en 10)
+//   data             → filas de la página actual (la paginación la hace la base de datos)
 //   busqueda         → texto del buscador (controlado por la página)
 //   onBusquedaChange → si se pasa, se muestra el buscador; la búsqueda la hace la base de datos
-//   total            → coincidencias totales en la base (si es mayor que data.length se avisa)
+//   orden            → lista [{ columna, direccion }] con que vienen ordenadas las filas (hasta 3 criterios)
+//   onOrdenChange    → si se pasa, los encabezados se vuelven botones para ordenar (lo hace la base de datos)
+//   total            → coincidencias totales en la base, de todas las páginas
+//   pagina, totalPaginas, porPagina → posición actual y tamaño de página
+//   opcionesPorPagina → opciones del selector de filas por página
+//   onPaginaChange(n), onPorPaginaChange(n) → si se pasa onPaginaChange se muestran los controles de paginación
 //   cargando         → true mientras llega la respuesta
-export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total, cargando = false }) {
-    const [pagina, setPagina] = useState(1)
+export function Tabla({
+    data = dataMock, busqueda = '', onBusquedaChange, orden, onOrdenChange,
+    total = data.length, pagina = 1, totalPaginas = 1, porPagina = data.length || 10, opcionesPorPagina = [],
+    onPaginaChange, onPorPaginaChange, cargando = false,
+}) {
     const consulta = busqueda.trim()
 
-    const totalPaginas = Math.max(1, Math.ceil(data.length / FILAS_POR_PAGINA))
-    const paginaSegura = Math.min(pagina, totalPaginas)
-    const inicio = (paginaSegura - 1) * FILAS_POR_PAGINA
-    const filas = data.slice(inicio, inicio + FILAS_POR_PAGINA)
-    const clavesFilas = data.map(s => s.id).join('|')
+    // Cada clic avanza la columna un paso: dirección natural → dirección contraria → sin orden.
+    //   · clic             → ordena solo por esa columna (reemplaza cualquier otro orden)
+    //   · Mayús + clic     → la suma (o avanza/quita) en una lista de hasta 3 criterios
+    const criterios = orden ?? []
+    function siguienteDireccion(col, actual) {
+        const primera = col.ordenInicial
+        if (!actual) return primera
+        return actual === primera ? (primera === 'asc' ? 'desc' : 'asc') : null
+    }
+    function ordenarPor(col, e) {
+        const actual = criterios.find(o => o.columna === col.orden)?.direccion
+        const siguiente = siguienteDireccion(col, actual)
 
-    useEffect(() => setPagina(1), [clavesFilas])
+        if (!e.shiftKey) {
+            onOrdenChange(siguiente ? [{ columna: col.orden, direccion: siguiente }] : [])
+        } else if (actual) {
+            onOrdenChange(criterios
+                .map(o => (o.columna === col.orden ? { ...o, direccion: siguiente } : o))
+                .filter(o => o.direccion))
+        } else if (criterios.length < 3) {
+            onOrdenChange([...criterios, { columna: col.orden, direccion: siguiente }])
+        }
+    }
+
+    const inicio = (pagina - 1) * porPagina
+
+    // Lo escrito en el campo de página se aplica al pulsar Enter o al salir del campo
+    function aplicarPaginaEscrita(e) {
+        const n = parseInt(e.target.value, 10)
+        if (Number.isNaN(n)) { e.target.value = pagina; return }
+        const valida = Math.min(Math.max(1, n), totalPaginas)
+        e.target.value = valida
+        if (valida !== pagina) onPaginaChange(valida)
+    }
 
     return (
         <Card
             titulo="Sesiones recientes"
-            subtitulo="Últimas sesiones registradas con los filtros aplicados"
+            subtitulo={onOrdenChange
+                ? 'Últimas sesiones registradas con los filtros aplicados · Mayús + clic en un encabezado para ordenar por varias columnas'
+                : 'Últimas sesiones registradas con los filtros aplicados'}
             bodyStyle={{ padding: '12px 0 0' }}
             accion={onBusquedaChange && (
                 <label className="buscador">
@@ -158,19 +204,48 @@ export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total,
                 </label>
             )}
         >
-            <div style={{ overflowX: 'auto', minHeight: 200 }}>
+            <div style={{ overflowX: 'auto', minHeight: 200, opacity: cargando && data.length > 0 ? 0.55 : 1, transition: 'opacity 0.15s ease' }} aria-busy={cargando}>
                 <table className="data-table">
                     <thead>
                         <tr>
-                            {COLS.map((col, i) => (
-                                <th key={col.label} scope="col" style={{ textAlign: col.align ?? 'left' }}>
-                                    {/* Las últimas columnas anclan el tooltip a la derecha para que no se salga de la tabla */}
-                                    <span className="col-tip" data-ancla={i >= COLS.length - 3 ? 'derecha' : undefined} tabIndex={0} aria-describedby={`ayuda-col-${i}`}>
-                                        {col.label.split('\n').map((linea, j) => j === 0 ? linea : <Fragment key={j}><br />{linea}</Fragment>)}
-                                        <span role="tooltip" id={`ayuda-col-${i}`} className="col-tip-texto"><Ayuda texto={col.ayuda} /></span>
-                                    </span>
-                                </th>
-                            ))}
+                            {COLS.map((col, i) => {
+                                const posicion = onOrdenChange ? criterios.findIndex(o => o.columna === col.orden) : -1
+                                const activa = posicion >= 0
+                                const direccion = activa ? criterios[posicion].direccion : null
+                                const etiqueta = col.label.split('\n').map((linea, j) => j === 0 ? linea : <Fragment key={j}><br />{linea}</Fragment>)
+                                return (
+                                    <th
+                                        key={col.label}
+                                        scope="col"
+                                        className={col.estrecha ? 'col-estrecha' : undefined}
+                                        style={{ textAlign: col.align ?? 'left' }}
+                                        aria-sort={posicion === 0 ? (direccion === 'asc' ? 'ascending' : 'descending') : undefined}
+                                    >
+                                        {/* Las últimas columnas anclan el tooltip a la derecha para que no se salga de la tabla */}
+                                        <span className="col-tip" data-ancla={i >= COLS.length - 3 ? 'derecha' : undefined}>
+                                            {onOrdenChange ? (
+                                                <button
+                                                    type="button"
+                                                    className="col-orden"
+                                                    data-activa={activa || undefined}
+                                                    aria-describedby={`ayuda-col-${i}`}
+                                                    aria-label={`Ordenar por ${col.label.replace(/\n/g, ' ')}`}
+                                                    onClick={e => ordenarPor(col, e)}
+                                                >
+                                                    <span>{etiqueta}</span>
+                                                    {activa
+                                                        ? (direccion === 'asc' ? <ArrowUp size={14} aria-hidden="true" /> : <ArrowDown size={14} aria-hidden="true" />)
+                                                        : <ChevronsUpDown size={14} aria-hidden="true" className="col-orden-inactivo" />}
+                                                    {activa && criterios.length > 1 && <span className="col-orden-n" aria-hidden="true">{posicion + 1}</span>}
+                                                </button>
+                                            ) : (
+                                                <span tabIndex={0} aria-describedby={`ayuda-col-${i}`}>{etiqueta}</span>
+                                            )}
+                                            <span role="tooltip" id={`ayuda-col-${i}`} className="col-tip-texto"><Ayuda texto={col.ayuda} /></span>
+                                        </span>
+                                    </th>
+                                )
+                            })}
                         </tr>
                     </thead>
                     <tbody>
@@ -181,7 +256,7 @@ export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total,
                                 </td>
                             </tr>
                         )}
-                        {filas.map((s, i) => {
+                        {data.map((s, i) => {
                             const nps    = npsInfo(s.nps)
                             const estado = estadoInfo(s.estado)
                             const IconoCanal = iconoCanal(s.canal)
@@ -202,11 +277,11 @@ export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total,
                                         </span>
                                     </td>
                                     <td>{s.zona}</td>
-                                    <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13 }}>{s.duracion}</td>
-                                    <td style={{ color: s.resueltoPrimerContacto === 'Sí' ? 'var(--status-good-ink)' : s.resueltoPrimerContacto === 'No' ? 'var(--text)' : 'var(--text-light)', fontWeight: s.resueltoPrimerContacto === 'Sí' ? 600 : 400 }}>
+                                    <td className="col-estrecha" style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{s.duracion}</td>
+                                    <td className="col-estrecha" style={{ color: s.resueltoPrimerContacto === 'Sí' ? 'var(--status-good-ink)' : s.resueltoPrimerContacto === 'No' ? 'var(--text)' : 'var(--text-light)', fontWeight: s.resueltoPrimerContacto === 'Sí' ? 600 : 400 }}>
                                         {s.resueltoPrimerContacto}
                                     </td>
-                                    <td>
+                                    <td className="col-estrecha">
                                         {s.resueltaIA === 'Sí'
                                             ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--status-good-ink)', fontWeight: 600 }}><Bot size={16} aria-hidden="true" />Sí</span>
                                             : <span style={{ color: 'var(--text-light)' }}>No</span>}
@@ -231,19 +306,51 @@ export function Tabla({ data = dataMock, busqueda = '', onBusquedaChange, total,
                     </tbody>
                 </table>
             </div>
-            {data.length > 0 && (
+            {onPaginaChange && total > 0 && (
                 <nav className="table-pagination" aria-label="Paginación de sesiones">
-                    <span aria-live="polite">
-                        Mostrando {inicio + 1}–{Math.min(inicio + FILAS_POR_PAGINA, data.length)} de {data.length} sesiones
-                        {total > data.length && ` (hay ${formatoNumero.format(total)} coincidencias; se muestran las ${data.length} más recientes)`}
-                    </span>
+                    <div className="table-pagination-info">
+                        <span aria-live="polite">
+                            Mostrando {formatoNumero.format(inicio + 1)}–{formatoNumero.format(Math.min(inicio + porPagina, total))} de {formatoNumero.format(total)} sesiones
+                        </span>
+                        {onPorPaginaChange && (
+                            <label className="table-pagination-filas">
+                                <span>Filas por página</span>
+                                <select value={porPagina} onChange={e => onPorPaginaChange(Number(e.target.value))}>
+                                    {opcionesPorPagina.map(n => <option key={n} value={n}>{n}</option>)}
+                                </select>
+                            </label>
+                        )}
+                    </div>
+
                     <div className="table-pagination-controls">
-                        <button type="button" onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaSegura === 1} aria-label="Página anterior">
+                        <button type="button" onClick={() => onPaginaChange(1)} disabled={pagina === 1} aria-label="Primera página" title="Primera página">
+                            <ChevronsLeft size={16} aria-hidden="true" />
+                        </button>
+                        <button type="button" onClick={() => onPaginaChange(pagina - 1)} disabled={pagina === 1} aria-label="Página anterior">
                             <ChevronLeft size={16} aria-hidden="true" /> Anterior
                         </button>
-                        <span>Página {paginaSegura} de {totalPaginas}</span>
-                        <button type="button" onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaSegura === totalPaginas} aria-label="Página siguiente">
+
+                        <label className="table-pagination-ir">
+                            <span>Página</span>
+                            {/* key: al cambiar de página el campo se vuelve a crear con el número nuevo */}
+                            <input
+                                key={pagina}
+                                type="number"
+                                min={1}
+                                max={totalPaginas}
+                                defaultValue={pagina}
+                                aria-label={`Ir a la página (de 1 a ${totalPaginas})`}
+                                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                                onBlur={aplicarPaginaEscrita}
+                            />
+                            <span>de {formatoNumero.format(totalPaginas)}</span>
+                        </label>
+
+                        <button type="button" onClick={() => onPaginaChange(pagina + 1)} disabled={pagina === totalPaginas} aria-label="Página siguiente">
                             Siguiente <ChevronRight size={16} aria-hidden="true" />
+                        </button>
+                        <button type="button" onClick={() => onPaginaChange(totalPaginas)} disabled={pagina === totalPaginas} aria-label="Última página" title="Última página">
+                            <ChevronsRight size={16} aria-hidden="true" />
                         </button>
                     </div>
                 </nav>
