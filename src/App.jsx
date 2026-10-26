@@ -21,6 +21,7 @@ import { useState }         from 'react'
 import { useFiltros }        from './hooks/useFiltros'
 import { useDashboardData }  from './hooks/useDashboardData'
 import { describirPeriodo, diasDelRango } from './lib/fechas'
+import { AYUDAS } from './lib/ayudas'
 
 // Componentes del Overview (página principal)
 import { KPICard }       from './components/KPICard.jsx'
@@ -91,10 +92,11 @@ function App() {
                             <KPICardLineal
                                 titulo={porDia ? 'FCR y TMO por día' : 'FCR y TMO por mes'}
                                 subtitulo={porDia ? 'Evolución diaria del período seleccionado' : 'Evolución mensual del período seleccionado'}
+                                ayuda={AYUDAS.fcrTmo(porDia)}
                                 data={dataLineal}
                             />
-                            <KPICardPie    titulo="Distribución por canal"   data={dataPie}     />
-                            <KPICardBarras titulo="Tasa de éxito por zona"   data={dataBarras}  />
+                            <KPICardPie    titulo="Distribución por canal"   ayuda={AYUDAS.canal} data={dataPie}     />
+                            <KPICardBarras titulo="Tasa de éxito por zona"   ayuda={AYUDAS.zona}  data={dataBarras}  />
                         </div>
                     </main>
                 )}

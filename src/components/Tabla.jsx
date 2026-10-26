@@ -6,6 +6,7 @@
 import { ArrowDown, ArrowUp, Bot, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, Globe, Headset, Mail, MessageCircle, MessagesSquare, Search, Smartphone } from 'lucide-react'
 import { Fragment } from 'react'
 import { Card } from './Card.jsx'
+import { Ayuda } from './Tip.jsx'
 import { STATUS, colorCanal, formatoNumero, normalizar } from '../lib/chartTheme'
 
 const dataMock = [
@@ -115,19 +116,6 @@ const COLS = [
 function formatoFecha(iso) {
     const m = String(iso ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
     return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'
-}
-
-// Convierte el texto de ayuda en párrafos; lo que va antes de ":" (el subtítulo) sale en negrita.
-// Solo cuenta como subtítulo un texto corto sin puntos, para no poner en negrita frases largas.
-function Ayuda({ texto }) {
-    return texto.split('\n').map((linea, i) => {
-        const m = linea.match(/^([^:.]{1,28}:)\s*(.*)$/)
-        return (
-            <span key={i} className="col-tip-linea">
-                {m ? <><strong>{m[1]}</strong> {m[2]}</> : linea}
-            </span>
-        )
-    })
 }
 
 // Props:

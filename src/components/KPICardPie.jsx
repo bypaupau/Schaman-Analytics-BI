@@ -2,9 +2,9 @@
 import { GraficoPie } from "./GraficoPie.jsx"
 import { Card } from "./Card.jsx"
 
-export function KPICardPie({ titulo, data }) {
+export function KPICardPie({ titulo, ayuda, data }) {
     return (
-        <Card titulo={titulo} subtitulo="% de sesiones atendidas en cada canal">
+        <Card titulo={titulo} ayuda={ayuda} subtitulo="% de sesiones atendidas en cada canal">
             <GraficoPie data={data} colorear="canal" />
         </Card>
     )

@@ -19,6 +19,7 @@ import { Target, Zap, Timer, Smile, Bot,
          TrendingUp }                          from 'lucide-react'
 import { supabase }                            from '../lib/supabase'
 import { formatoNumero }                       from '../lib/chartTheme'
+import { AYUDAS }                              from '../lib/ayudas'
 
 // ── Iconos para las 5 dimensiones del ScoreCard ─────────────────────────────
 // Usamos createElement() en lugar de JSX (<Target />) porque este archivo
@@ -42,11 +43,11 @@ function formatNPS(val) {
 // ── Estado inicial de los KPI Cards mientras se espera la primera respuesta ──
 // Muestra '—' para no confundir al usuario con valores en cero
 const KPI_CARGANDO = [
-    { KPINombre: 'FCR',        kpiLabel: 'Resolución al primer contacto', metricaKPI: '—', icono: CircleCheckBig,     tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
-    { KPINombre: 'TMO',        kpiLabel: 'Tiempo medio de operación',     metricaKPI: '—', icono: Clock,              tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
-    { KPINombre: 'T-NPS',      kpiLabel: 'Satisfacción del cliente',      metricaKPI: '—', icono: MessageCircleHeart, tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
-    { KPINombre: 'Tasa de éxito', kpiLabel: 'Sesiones resueltas',         metricaKPI: '—', icono: TrendingUp,         tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
-    { KPINombre: 'Resolución por IA', kpiLabel: 'Sesiones resueltas por IA',               metricaKPI: '—', icono: Bot,                tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'FCR', ayuda: AYUDAS.fcr,        kpiLabel: 'Resolución al primer contacto', metricaKPI: '—', icono: CircleCheckBig,     tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'TMO', ayuda: AYUDAS.tmo,        kpiLabel: 'Tiempo medio de operación',     metricaKPI: '—', icono: Clock,              tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'T-NPS', ayuda: AYUDAS.tnps,      kpiLabel: 'Satisfacción del cliente',      metricaKPI: '—', icono: MessageCircleHeart, tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'Tasa de éxito', ayuda: AYUDAS.tasaExito, kpiLabel: 'Sesiones resueltas',         metricaKPI: '—', icono: TrendingUp,         tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
+    { KPINombre: 'Resolución por IA', ayuda: AYUDAS.resolucionIA, kpiLabel: 'Sesiones resueltas por IA',               metricaKPI: '—', icono: Bot,                tendencia: 'Cargando…', textoKPI: 'Consultando datos…' },
 ]
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -99,7 +100,7 @@ export function useDashboardData(filtros) {
             // devolver una fila con valores null cuando no hay sesiones en ese período.
             setKpisData([
                 {
-                    KPINombre:  'FCR',
+                    KPINombre:  'FCR', ayuda: AYUDAS.fcr,
                     kpiLabel:   'Resolución al primer contacto',
                     icono:      CircleCheckBig,
                     metricaKPI: fcr?.fcr_pct != null ? `${fcr.fcr_pct}%` : '—',
@@ -109,7 +110,7 @@ export function useDashboardData(filtros) {
                     tendencia: 'Primer contacto',
                 },
                 {
-                    KPINombre:  'TMO',
+                    KPINombre:  'TMO', ayuda: AYUDAS.tmo,
                     kpiLabel:   'Tiempo medio de operación',
                     icono:      Clock,
                     metricaKPI: tmo?.tmo_segundos != null ? `${tmo.tmo_segundos}s` : '—',
@@ -119,7 +120,7 @@ export function useDashboardData(filtros) {
                     tendencia: 'Duración promedio',
                 },
                 {
-                    KPINombre:  'T-NPS',
+                    KPINombre:  'T-NPS', ayuda: AYUDAS.tnps,
                     kpiLabel:   'Satisfacción del cliente',
                     icono:      MessageCircleHeart,
                     metricaKPI: nps?.tnps_score != null ? formatNPS(nps.tnps_score) : '—',
@@ -129,7 +130,7 @@ export function useDashboardData(filtros) {
                     tendencia: 'Net Promoter Score',
                 },
                 {
-                    KPINombre:  'Tasa de éxito',
+                    KPINombre:  'Tasa de éxito', ayuda: AYUDAS.tasaExito,
                     kpiLabel:   'Sesiones resueltas',
                     icono:      TrendingUp,
                     metricaKPI: exito?.tasa_exito_pct != null ? `${exito.tasa_exito_pct}%` : '—',
@@ -139,7 +140,7 @@ export function useDashboardData(filtros) {
                     tendencia: 'Resolución efectiva',
                 },
                 {
-                    KPINombre:  'Resolución por IA',
+                    KPINombre:  'Resolución por IA', ayuda: AYUDAS.resolucionIA,
                     kpiLabel:   'Sesiones resueltas por IA',
                     icono:      Bot,
                     metricaKPI: defl?.deflection_pct != null ? `${defl.deflection_pct}%` : '—',
@@ -158,11 +159,11 @@ export function useDashboardData(filtros) {
                 setScoreData({
                     score: Math.round(s.score_total),
                     dimensiones: [
-                        { nombre: 'Precisión',    valor: Math.round(s.cobertura),    icono: ICONOS_DIM.Precisión    },
-                        { nombre: 'Efectividad',  valor: Math.round(s.efectividad),  icono: ICONOS_DIM.Efectividad  },
-                        { nombre: 'Eficiencia',   valor: Math.round(s.eficiencia),   icono: ICONOS_DIM.Eficiencia   },
-                        { nombre: 'Experiencia',  valor: Math.round(s.experiencia),  icono: ICONOS_DIM.Experiencia  },
-                        { nombre: 'Resolución por IA', valor: Math.round(s.proactividad), icono: ICONOS_DIM['Resolución por IA'] },
+                        { nombre: 'Precisión', ayuda: AYUDAS.dim['Precisión'],    valor: Math.round(s.cobertura),    icono: ICONOS_DIM.Precisión    },
+                        { nombre: 'Efectividad', ayuda: AYUDAS.dim['Efectividad'],  valor: Math.round(s.efectividad),  icono: ICONOS_DIM.Efectividad  },
+                        { nombre: 'Eficiencia', ayuda: AYUDAS.dim['Eficiencia'],   valor: Math.round(s.eficiencia),   icono: ICONOS_DIM.Eficiencia   },
+                        { nombre: 'Experiencia', ayuda: AYUDAS.dim['Experiencia'],  valor: Math.round(s.experiencia),  icono: ICONOS_DIM.Experiencia  },
+                        { nombre: 'Resolución por IA', ayuda: AYUDAS.dim['Resolución por IA'], valor: Math.round(s.proactividad), icono: ICONOS_DIM['Resolución por IA'] },
                     ],
                 })
             }

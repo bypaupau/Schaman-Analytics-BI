@@ -402,6 +402,19 @@ select {
 .col-tip[data-ancla="derecha"] .col-tip-texto { left: auto; right: 0; }
 .col-tip:hover .col-tip-texto, .col-tip:focus-within .col-tip-texto { opacity: 1; visibility: visible; }
 
+/* Tooltip de los títulos (componente Tip): se dibuja en <body> con posición fija.
+   El título no cambia de aspecto; solo el cursor, que pasa a ser el de ayuda. */
+.tip { cursor: help; outline: none; }
+.tip:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 4px; }
+.tip-flotante {
+    position: fixed;
+    z-index: 200;
+    max-width: none;
+    opacity: 1;
+    visibility: visible;
+    font-family: var(--font-sans);
+}
+
 /* Encabezado ordenable: el botón hereda el estilo del <th> (mayúsculas, espaciado) */
 .col-orden {
     display: inline-flex;
