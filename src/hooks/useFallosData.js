@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════════════════════
 // useFallosData.js
 // Hook de datos para la página "Análisis de Fallos".
-// Llama 4 RPCs en paralelo con los mismos filtros que el panel general.
+// Llama 5 RPCs en paralelo con los mismos filtros que el panel general.
 // ══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react'
@@ -14,6 +14,7 @@ export function useFallosData(filtros) {
     const [porCategoria,     setPorCategoria]     = useState(undefined)
     const [porPrioridad,     setPorPrioridad]     = useState(undefined)
     const [topDispositivos,  setTopDispositivos]  = useState(undefined)
+    const [resumen,          setResumen]          = useState(undefined)   // { total_sesiones, sesiones_con_fallo }
     const [error,            setError]            = useState(null)
 
     useEffect(() => {
@@ -25,6 +26,7 @@ export function useFallosData(filtros) {
             setPorCategoria(undefined)
             setPorPrioridad(undefined)
             setTopDispositivos(undefined)
+            setResumen(undefined)
             setError(null)
 
             const filtrosRpc = {
@@ -34,20 +36,21 @@ export function useFallosData(filtros) {
                 p_region: filtros.region,
                 p_subzona: filtros.subzona,
             }
-            // Las 4 consultas van en paralelo — mismo patrón que useDashboardData
+            // Las 5 consultas van en paralelo — mismo patrón que useDashboardData
             try {
-                const [rProblemas, rCategoria, rPrioridad, rDispositivos] = await Promise.all([
+                const [rProblemas, rCategoria, rPrioridad, rDispositivos, rResumen] = await Promise.all([
                     supabase.rpc('get_fallos_top_problemas',          { ...filtrosRpc, p_limit: 10 }),
                     supabase.rpc('get_fallos_por_categoria',          filtrosRpc),
                     supabase.rpc('get_fallos_resolucion_por_prioridad', filtrosRpc),
                     supabase.rpc('get_fallos_dispositivos',           { ...filtrosRpc, p_limit: 8 }),
+                    supabase.rpc('get_fallos_resumen',                filtrosRpc),
                 ])
 
                 // Ignoramos respuestas antiguas si el usuario cambió los filtros
                 // mientras estas consultas seguían en curso.
                 if (cancelled) return
 
-                const respuestas = [rProblemas, rCategoria, rPrioridad, rDispositivos]
+                const respuestas = [rProblemas, rCategoria, rPrioridad, rDispositivos, rResumen]
                 const errores = respuestas.filter(r => r.error).map(r => r.error.message)
                 if (errores.length) {
                     console.error('❌ Fallos RPC error:', errores)
@@ -59,6 +62,7 @@ export function useFallosData(filtros) {
                 setPorCategoria(rCategoria.error       ? [] : (rCategoria.data     ?? []))
                 setPorPrioridad(rPrioridad.error       ? [] : (rPrioridad.data     ?? []))
                 setTopDispositivos(rDispositivos.error ? [] : (rDispositivos.data  ?? []))
+                setResumen(rResumen.error ? null : (rResumen.data?.[0] ?? null))
             } catch (err) {
                 if (cancelled) return
                 console.error('❌ Fallos RPC error:', err)
@@ -67,6 +71,7 @@ export function useFallosData(filtros) {
                 setPorCategoria([])
                 setPorPrioridad([])
                 setTopDispositivos([])
+                setResumen(null)
             }
         }
 
@@ -74,5 +79,5 @@ export function useFallosData(filtros) {
         return () => { cancelled = true }
     }, [filtros?.desde, filtros?.hasta, filtros?.canal, filtros?.region, filtros?.subzona])
 
-    return { topProblemas, porCategoria, porPrioridad, topDispositivos, error }
+    return { topProblemas, porCategoria, porPrioridad, topDispositivos, resumen, error }
 }

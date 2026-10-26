@@ -19,6 +19,7 @@ import { PageHeader }       from '../components/PageHeader'
 import { MenuFiltros }      from '../components/MenuFiltros.jsx'
 import { STATUS, normalizar, formatoNumero } from '../lib/chartTheme'
 import { describirPeriodo } from '../lib/fechas'
+import { AYUDAS } from '../lib/ayudas'
 import { AlertOctagon, Activity, CheckCircle2, PieChartIcon } from 'lucide-react'
 
 // ── Prioridad → color de ESTADO (insensible a mayúsculas y tildes) ───────────
@@ -113,11 +114,15 @@ function TablaPrioridad({ data }) {
 
 // ── Componente principal de la página ────────────────────────────────────────
 export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
-    const { topProblemas, porCategoria, porPrioridad, topDispositivos, error } = useFallosData(valoresFiltro)
+    const { topProblemas, porCategoria, porPrioridad, topDispositivos, resumen, error } = useFallosData(valoresFiltro)
     const periodo = describirPeriodo(valoresFiltro.desde, valoresFiltro.hasta)
 
-    const totalSesiones = topProblemas?.reduce((acc, p) => acc + Number(p.total_sesiones), 0) ?? 0
+    // Sesiones del período y cuántas terminaron sin resolverse (escaladas, pendientes o abandonadas)
+    const totalSesiones = Number(resumen?.total_sesiones ?? 0)
+    const totalFallos   = Number(resumen?.sesiones_con_fallo ?? 0)
     const topProblema = topProblemas?.[0]
+    // Sesiones sin resolver del problema principal (null si la función de Supabase aún no devuelve esa columna)
+    const fallosTopProblema = topProblema?.sesiones_con_fallo == null ? null : Number(topProblema.sesiones_con_fallo)
 
     const tasaGlobal = porPrioridad?.length
         ? Math.round(
@@ -140,9 +145,10 @@ export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
     const colorResolucion = tasaGlobal == null
         ? 'brand' : tasaGlobal >= 75 ? 'good' : 'critical'
 
-    const pctProblema = totalSesiones > 0 && topProblema
-        ? Math.round((Number(topProblema.total_sesiones) / totalSesiones) * 100)
-        : 0;
+    // Peso del problema principal dentro de todos los fallos del período
+    const pctProblema = totalFallos > 0 && fallosTopProblema != null
+        ? Math.round((fallosTopProblema / totalFallos) * 100)
+        : null
 
     return (
         <main className="page">
@@ -159,7 +165,7 @@ export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
                 <div role="alert" style={{ marginTop: 16, padding: '14px 18px', borderRadius: 12, background: 'var(--warning-soft, #fff4d6)', color: 'var(--text)', border: '1px solid var(--warning, #f0b429)' }}>
                     <strong>No se pudieron cargar los análisis de fallos.</strong>{' '}
                     <span>{error}</span>{' '}
-                    <span>Revisa que las cuatro funciones RPC de fallos en Supabase tengan los parámetros de filtro actualizados.</span>
+                    <span>Revisa que las funciones RPC de fallos en Supabase estén actualizadas (sql/fallos_sesiones_con_fallo.sql).</span>
                 </div>
             )}
 
@@ -168,34 +174,44 @@ export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
                 <KPICard
                     icono={Activity}
                     KPINombre="Sesiones con fallo"
+                    ayuda={AYUDAS.fallosSesiones}
                     kpiLabel="Terminaron sin resolverse"
-                    metricaKPI={totalSesiones > 0 ? formatoNumero.format(totalSesiones) : '—'}
-                    textoKPI={topProblema ? `Distribuidas en ${topProblemas.length} tipos de problema distintos` : 'Sin datos para el período'}
+                    metricaKPI={resumen ? formatoNumero.format(totalFallos) : '—'}
+                    textoKPI={totalSesiones > 0
+                        ? `${Math.round((totalFallos / totalSesiones) * 100)}% de las ${formatoNumero.format(totalSesiones)} sesiones del período`
+                        : 'Sin datos para el período'}
                     tendencia="Volumen del período"
                 />
 
                 <KPICard
                     icono={AlertOctagon}
                     KPINombre="Problema principal"
+                    ayuda={AYUDAS.fallosPrincipal}
                     kpiLabel="El más frecuente del período"
                     metricaKPI={topProblema ? topProblema.problema : '—'}
                     esTextoLargo={true} /* ¡Esto adapta la tipografía! */
-                    textoKPI={topProblema ? `${formatoNumero.format(topProblema.total_sesiones)} sesiones en este período` : 'Sin datos'}
+                    textoKPI={topProblema
+                        ? `${formatoNumero.format(topProblema.total_sesiones)} sesiones${fallosTopProblema != null ? ` · ${formatoNumero.format(fallosTopProblema)} sin resolver` : ''}`
+                        : 'Sin datos'}
                     tendencia={topProblema ? `Prioridad ${topProblema.prioridad}` : undefined}
                 />
 
                 <KPICard
                     icono={PieChartIcon}
                     KPINombre="Impacto del problema"
+                    ayuda={AYUDAS.fallosImpacto}
                     kpiLabel="Peso sobre el total de fallos"
-                    metricaKPI={topProblema ? `${pctProblema}%` : '—'}
-                    textoKPI={topProblema ? `${formatoNumero.format(topProblema.total_sesiones)} de ${formatoNumero.format(totalSesiones)} sesiones totales` : 'Sin datos'}
+                    metricaKPI={pctProblema != null ? `${pctProblema}%` : '—'}
+                    textoKPI={pctProblema != null
+                        ? `${formatoNumero.format(fallosTopProblema)} de ${formatoNumero.format(totalFallos)} sesiones con fallo`
+                        : 'Sin datos'}
                     tendencia="Concentración"
                 />
 
                 <KPICard
                     icono={CheckCircle2}
                     KPINombre="Tasa de resolución"
+                    ayuda={AYUDAS.fallosResolucion}
                     kpiLabel="Ponderada por volumen"
                     metricaKPI={tasaGlobal != null ? `${tasaGlobal}%` : '—'}
                     textoKPI={criticaRow ? `Críticos: ${criticaRow.tasa_resolucion}% · Meta global: 75%` : 'Sin datos'}
@@ -208,6 +224,7 @@ export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
             <div className="grid-2-1">
                 <Card
                     titulo="Top 10 problemas más frecuentes"
+                    ayuda={AYUDAS.fallosTop}
                     subtitulo="Sesiones generadas por cada problema, coloreadas por prioridad"
                 >
                     <LeyendaColores titulo="Prioridad" items={PRIORIDADES} />
@@ -222,6 +239,7 @@ export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
 
                 <Card
                     titulo="Distribución por categoría"
+                    ayuda={AYUDAS.fallosCategoria}
                     subtitulo="% de sesiones según tipo de problema"
                 >
                     <GraficoPie data={porCategoria} />
@@ -232,6 +250,7 @@ export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
             <div className="grid-2">
                 <Card
                     titulo="Resolución por prioridad"
+                    ayuda={AYUDAS.fallosPrioridad}
                     subtitulo="¿Se resuelven más los problemas críticos? Meta: 75%"
                     bodyStyle={{ padding: '12px 0 8px' }}
                 >
@@ -242,6 +261,7 @@ export function PaginaFallos({ filtros, valoresFiltro, onCambioFiltro }) {
 
                 <Card
                     titulo="Fallos por dispositivo"
+                    ayuda={AYUDAS.fallosDispositivos}
                     subtitulo="Sesiones con fallo por modelo, coloreadas por tasa de fallo"
                 >
                     <LeyendaColores titulo="Tasa de fallo" items={GRAVEDAD} />
